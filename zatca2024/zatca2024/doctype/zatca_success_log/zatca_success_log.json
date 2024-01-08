@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2023-12-22 15:31:36.381735",
+ "creation": "2024-12-22 15:31:36.381735",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -50,9 +50,9 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-25 15:43:11.217166",
+ "modified": "2024-12-25 15:43:11.217166",
  "modified_by": "Administrator",
- "module": "Zatca2023",
+ "module": "Zatca2024",
  "name": "Zatca Success log",
  "owner": "Administrator",
  "permissions": [

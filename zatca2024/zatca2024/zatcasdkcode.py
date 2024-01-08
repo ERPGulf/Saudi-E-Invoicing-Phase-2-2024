@@ -2,8 +2,8 @@ import frappe
 import os
 # frappe.init(site="prod.erpgulf.com")
 # frappe.connect()
-from zatca2023.zatca2023.createxml import xml_tags,salesinvoice_data,invoice_Typecode_Simplified,invoice_Typecode_Standard,doc_Reference,additional_Reference ,company_Data,customer_Data,delivery_And_PaymentMeans,tax_Data,item_data,xml_structuring,invoice_Typecode_Compliance,delivery_And_PaymentMeans_for_Compliance,doc_Reference_compliance,get_tax_total_from_items
-from zatca2023.zatca2023.compliance import get_pwd,set_cert_path,create_compliance_x509,check_compliance
+from zatca2024.zatca2024.createxml import xml_tags,salesinvoice_data,invoice_Typecode_Simplified,invoice_Typecode_Standard,doc_Reference,additional_Reference ,company_Data,customer_Data,delivery_And_PaymentMeans,tax_Data,item_data,xml_structuring,invoice_Typecode_Compliance,delivery_And_PaymentMeans_for_Compliance,doc_Reference_compliance,get_tax_total_from_items
+from zatca2024.zatca2024.compliance import get_pwd,set_cert_path,create_compliance_x509,check_compliance
 import xml.etree.ElementTree as ET
 import base64
 from frappe.utils import now

@@ -4,7 +4,7 @@ frappe.ui.form.on("Sales Invoice", {
         if (frm.doc.docstatus === 1 && !["CLEARED", "REPORTED"].includes(frm.doc.custom_zatca_status)) {
                 frm.add_custom_button(__("Send invoice to Zatca"), function() {
                     frm.call({
-                        method:"zatca2023.zatca2023.zatcasdkcode.zatca_Background",
+                        method:"zatca2024.zatca2024.zatcasdkcode.zatca_Background",
                         args: {
                             "invoice_number": frm.doc.name
                         },
@@ -25,7 +25,7 @@ frappe.ui.form.on("Sales Invoice", {
 
         // frm.add_custom_button(__("Check invoice Validity"), function() {
         //     frm.call({
-        //         method:"zatca2023.zatca2023.validation_inside_invoice.zatca_Call_compliance_inside",
+        //         method:"zatca2024.zatca2024.validation_inside_invoice.zatca_Call_compliance_inside",
         //         args: {
         //             "invoice_number": frm.doc.name
         //         },

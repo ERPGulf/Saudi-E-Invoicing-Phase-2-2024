@@ -1,4 +1,4 @@
-#utilites for zatca2023
+#utilites for zatca2024
 
 import frappe
 import os
@@ -109,7 +109,7 @@ def xml_tags():
                 SignedProperties.set("Id" , "xadesSignedProperties")
                 SignedSignatureProperties = ET.SubElement(SignedProperties , "xades:SignedSignatureProperties"  )
                 SigningTime = ET.SubElement(SignedSignatureProperties , "xades:SigningTime"  )
-                SigningTime.text = "2023-01-24T11:36:34Z"
+                SigningTime.text = "2024-01-24T11:36:34Z"
                 SigningCertificate = ET.SubElement(SignedSignatureProperties , "xades:SigningCertificate"  )
                 Cert = ET.SubElement(SigningCertificate , "xades:Cert"  )
                 CertDigest = ET.SubElement(Cert , "xades:CertDigest"  )

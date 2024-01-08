@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2023-12-25 10:34:01.303574",
+ "creation": "2024-12-25 10:34:01.303574",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -18,9 +18,9 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-25 10:34:01.303574",
+ "modified": "2024-12-25 10:34:01.303574",
  "modified_by": "Administrator",
- "module": "Zatca2023",
+ "module": "Zatca2024",
  "name": "Zatca Reporting",
  "owner": "Administrator",
  "permissions": [

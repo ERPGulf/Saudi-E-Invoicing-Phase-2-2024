@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2023-12-15 12:02:35.671013",
+ "creation": "2024-12-15 12:02:35.671013",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -196,9 +196,9 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-12-27 08:45:09.248903",
+ "modified": "2024-12-27 08:45:09.248903",
  "modified_by": "Administrator",
- "module": "Zatca2023",
+ "module": "Zatca2024",
  "name": "Zatca setting",
  "owner": "Administrator",
  "permissions": [

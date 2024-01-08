@@ -1,7 +1,7 @@
-app_name = "zatca2023"
-app_title = "Zatca2023"
+app_name = "zatca2024"
+app_title = "Zatca2024"
 app_publisher = "ERPGulf"
-app_description = "Saudi Zatca phase-2 implementation according to zatca 2023 documents"
+app_description = "Saudi Zatca phase-2 implementation according to zatca 2024 documents"
 app_email = "support@ERPGulf.com"
 app_license = "mit"
 
@@ -15,15 +15,15 @@ from . import __version__ as app_version
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/zatca2023/css/zatca2023.css"
-# app_include_js = "/assets/zatca2023/js/zatca2023.js"
+# app_include_css = "/assets/zatca2024/css/zatca2024.css"
+# app_include_js = "/assets/zatca2024/js/zatca2024.js"
 
 # include js, css files in header of web template
-# web_include_css = "/assets/zatca2023/css/zatca2023.css"
-# web_include_js = "/assets/zatca2023/js/zatca2023.js"
+# web_include_css = "/assets/zatca2024/css/zatca2024.css"
+# web_include_js = "/assets/zatca2024/js/zatca2024.js"
 
 # include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "zatca2023/public/scss/website"
+# website_theme_scss = "zatca2024/public/scss/website"
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -41,7 +41,7 @@ from . import __version__ as app_version
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "zatca2023/public/icons.svg"
+# app_include_icons = "zatca2024/public/icons.svg"
 
 # Home Pages
 # ----------
@@ -65,43 +65,43 @@ from . import __version__ as app_version
 
 # add methods and filters to jinja environment
 # jinja = {
-#	"methods": "zatca2023.utils.jinja_methods",
-#	"filters": "zatca2023.utils.jinja_filters"
+#	"methods": "zatca2024.utils.jinja_methods",
+#	"filters": "zatca2024.utils.jinja_filters"
 # }
 
 # Installation
 # ------------
 
-# before_install = "zatca2023.install.before_install"
-# after_install = "zatca2023.install.after_install"
+# before_install = "zatca2024.install.before_install"
+# after_install = "zatca2024.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "zatca2023.uninstall.before_uninstall"
-# after_uninstall = "zatca2023.uninstall.after_uninstall"
+# before_uninstall = "zatca2024.uninstall.before_uninstall"
+# after_uninstall = "zatca2024.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------
 # To set up dependencies/integrations with other apps
 # Name of the app being installed is passed as an argument
 
-# before_app_install = "zatca2023.utils.before_app_install"
-# after_app_install = "zatca2023.utils.after_app_install"
+# before_app_install = "zatca2024.utils.before_app_install"
+# after_app_install = "zatca2024.utils.after_app_install"
 
 # Integration Cleanup
 # -------------------
 # To clean up dependencies/integrations with other apps
 # Name of the app being uninstalled is passed as an argument
 
-# before_app_uninstall = "zatca2023.utils.before_app_uninstall"
-# after_app_uninstall = "zatca2023.utils.after_app_uninstall"
+# before_app_uninstall = "zatca2024.utils.before_app_uninstall"
+# after_app_uninstall = "zatca2024.utils.after_app_uninstall"
 
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "zatca2023.notifications.get_notification_config"
+# notification_config = "zatca2024.notifications.get_notification_config"
 
 # Permissions
 # -----------
@@ -138,7 +138,7 @@ from . import __version__ as app_version
 # doc_events = {
     
 #     "Sales Invoice": { "on_submit": [
-#             "zatca2023.zatca2023.zatcasdkcode.before_save"
+#             "zatca2024.zatca2024.zatcasdkcode.before_save"
 #          ]
 #     }}
 
@@ -148,39 +148,39 @@ from . import __version__ as app_version
 
 # scheduler_events = {
 #	"all": [
-#		"zatca2023.tasks.all"
+#		"zatca2024.tasks.all"
 #	],
 #	"daily": [
-#		"zatca2023.tasks.daily"
+#		"zatca2024.tasks.daily"
 #	],
 #	"hourly": [
-#		"zatca2023.tasks.hourly"
+#		"zatca2024.tasks.hourly"
 #	],
 #	"weekly": [
-#		"zatca2023.tasks.weekly"
+#		"zatca2024.tasks.weekly"
 #	],
 #	"monthly": [
-#		"zatca2023.tasks.monthly"
+#		"zatca2024.tasks.monthly"
 #	],
 # }
 
 # Testing
 # -------
 
-# before_tests = "zatca2023.install.before_tests"
+# before_tests = "zatca2024.install.before_tests"
 
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
-#	"frappe.desk.doctype.event.event.get_events": "zatca2023.event.get_events"
+#	"frappe.desk.doctype.event.event.get_events": "zatca2024.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-#	"Task": "zatca2023.task.get_dashboard_data"
+#	"Task": "zatca2024.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -194,13 +194,13 @@ from . import __version__ as app_version
 
 # Request Events
 # ----------------
-# before_request = ["zatca2023.utils.before_request"]
-# after_request = ["zatca2023.utils.after_request"]
+# before_request = ["zatca2024.utils.before_request"]
+# after_request = ["zatca2024.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["zatca2023.utils.before_job"]
-# after_job = ["zatca2023.utils.after_job"]
+# before_job = ["zatca2024.utils.before_job"]
+# after_job = ["zatca2024.utils.after_job"]
 
 # User Data Protection
 # --------------------
@@ -230,7 +230,7 @@ from . import __version__ as app_version
 # --------------------------------
 
 # auth_hooks = [
-#	"zatca2023.auth.validate"
+#	"zatca2024.auth.validate"
 # ]
 
 # Automatically update python controller files with type annotations for this app.
@@ -241,11 +241,11 @@ from . import __version__ as app_version
 # }
 doc_events = {
     "Sales Invoice": {
-        # "before_submit": "zatca2023.zatca2023.validations.zatca_done_or_not",
-        # "before_save": "zatca2023.zatca2023.validations.before_save",
-        "before_cancel": "zatca2023.zatca2023.validations.before_save",
-        "after_insert": "zatca2023.zatca2023.validations.duplicating_invoice",
-        "on_submit": "zatca2023.zatca2023.zatcasdkcode.zatca_Background_on_submit"
+        # "before_submit": "zatca2024.zatca2024.validations.zatca_done_or_not",
+        # "before_save": "zatca2024.zatca2024.validations.before_save",
+        "before_cancel": "zatca2024.zatca2024.validations.before_save",
+        "after_insert": "zatca2024.zatca2024.validations.duplicating_invoice",
+        "on_submit": "zatca2024.zatca2024.zatcasdkcode.zatca_Background_on_submit"
     }
 }
 doctype_js = {
@@ -253,4 +253,4 @@ doctype_js = {
     }
 
 
-fixtures = [ {"dt": "Custom Field","filters": [["module", "=", "zatca2023"]] }]
+fixtures = [ {"dt": "Custom Field","filters": [["module", "=", "zatca2024"]] }]
