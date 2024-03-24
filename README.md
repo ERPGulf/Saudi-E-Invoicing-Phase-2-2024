@@ -8,7 +8,7 @@ This app is compliant with the new Zatca e-invoicing document published in 2024.
 
 You can follow standard Frappe methods for installing apps. Please see it here below bench 
 
-get-app https://github.com/ERPGulf/saudi_phase2_api.git
+get-app [https://github.com/ERPGulf/saudi_phase2_api.git](https://github.com/ERPGulf/Saudi-E-Invoicing-Phase-2-2024.git)
 
 bench --site yoursite.erpgulf.com install-app saudi-phase2-api
 
