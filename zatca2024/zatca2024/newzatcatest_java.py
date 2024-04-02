@@ -142,7 +142,7 @@ def generate_self_signed_certificate(private_key_path, certificate_path, subject
     subject = issuer = x509.Name([
         x509.NameAttribute(NameOID.COUNTRY_NAME, subject_details.get("country", "US")),
         x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, subject_details.get("state", "California")),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, subject_details.get("locality", "San Francisco")),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, subject_details.get("locality", "S  an Francisco")),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, subject_details.get("organization", "My Company")),
         x509.NameAttribute(NameOID.COMMON_NAME, subject_details.get("common_name", "mysite.com")),
     ])

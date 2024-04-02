@@ -130,63 +130,59 @@ def get_API_url(base_url):
                     frappe.throw(" getting url failed"+ str(e) ) 
 
 def update_json_data_csid(existing_data, company_name, csid):
-    # Check if the company already exists in the data
-    company_exists = False
-    for entry in existing_data["data"]:
-        if entry["company"] == company_name:
-            # Update the csid for the existing company
-            entry["csid"] = csid
-            company_exists = True
-            break
+                    try:
+                        company_exists = False
+                        for entry in existing_data["data"]:
+                            if entry["company"] == company_name:
+                                
+                                entry["csid"] = csid
+                                company_exists = True
+                                break
+                        if not company_exists:
+                            existing_data["data"].append({
+                                "company": company_name,
+                                "csid": csid
+                            })
 
-    # If the company does not exist, add a new entry
-    if not company_exists:
-        existing_data["data"].append({
-            "company": company_name,
-            "csid": csid
-        })
-
-    return existing_data
+                        return existing_data
+                    except Exception as e:
+                            frappe.throw("error json data of request id: " + str(e))
 
 def update_json_data_request_id(existing_data, company_name, request_id):
-    # Check if the company already exists in the data
-    company_exists = False
-    for entry in existing_data["data"]:
-        if entry["company"] == company_name:
-            # Update the request_id for the existing company
-            entry["request_id"] = request_id
-            company_exists = True
-            break
+                    try:
+                        company_exists = False
+                        for entry in existing_data["data"]:
+                            if entry["company"] == company_name:
+                                entry["request_id"] = request_id
+                                company_exists = True
+                                break
+                        if not company_exists:
+                            existing_data["data"].append({
+                                "company": company_name,
+                                "request_id": request_id
+                            })
 
-    # If the company does not exist, add a new entry
-    if not company_exists:
-        existing_data["data"].append({
-            "company": company_name,
-            "request_id": request_id
-        })
-
-    return existing_data
-
+                        return existing_data
+                    except Exception as e:
+                                        frappe.throw("error json data of request id: " + str(e))
 
 def update_json_data_production_csid(existing_data, company_name, production_csid):
-    # Check if the company already exists in the data
-    company_exists = False
-    for entry in existing_data["companies"]:
-        if entry["company"] == company_name:
-            # Update the production_csid for the existing company
-            entry["production_csid"] = production_csid
-            company_exists = True
-            break
-
-    # If the company does not exist, add a new entry
-    if not company_exists:
-        existing_data["companies"].append({
-            "company": company_name,
-            "production_csid": production_csid
-        })
-
-    return existing_data
-
+                    try:
+                        company_exists = False
+                        for entry in existing_data["companies"]:
+                            if entry["company"] == company_name:
+                                entry["production_csid"] = production_csid
+                                company_exists = True
+                                break
+                        if not company_exists:
+                            existing_data["companies"].append({
+                                "company": company_name,
+                                "production_csid": production_csid
+                            })
+                        return existing_data
+                    except Exception as e:
+                                frappe.throw("error json data of production csid: " + str(e))
+                                
 @frappe.whitelist(allow_guest=True)
 def create_CSID(): 
                 try:
@@ -350,10 +346,13 @@ def xml_base64_Decode(signed_xmlfile_name):
                         frappe.throw("Error in xml base64:  " + str(e) )
                         
 def get_csid_for_company(basic_auth_data, company_name):
-                    for entry in basic_auth_data.get("data", []):
-                        if entry.get("company") == company_name:
-                            return entry.get("csid")
-                    return None
+                    try:     
+                        for entry in basic_auth_data.get("data", []):
+                            if entry.get("company") == company_name:
+                                return entry.get("csid")
+                        return None
+                    except Exception as e:
+                        frappe.throw("Error in getting csid for company:  " + str(e) )
 
 def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                 # frappe.throw("inside compliance api call")
@@ -377,7 +376,6 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                             'Content-Type': 'application/json'
                         }
                     else:
-                        # Handle the case where the CSID is not found
                         frappe.throw("CSID for company {} not found".format(company_name))
                     try:
                         # frappe.throw("inside compliance api call2")
@@ -395,10 +393,13 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                     frappe.throw("ERROR in clearance invoice ,zatca validation:  " + str(e) )
 
 def get_request_id_for_company(compliance_request_id_data, company_name):
-                for entry in compliance_request_id_data.get("data", []):
-                    if entry.get("company") == company_name:
-                        return entry.get("request_id")
-                return None
+                try:
+                    for entry in compliance_request_id_data.get("data", []):
+                        if entry.get("company") == company_name:
+                            return entry.get("request_id")
+                    return None
+                except Exception as e:
+                        frappe.throw("Error in getting request id of company for production:  " + str(e) )
 
 @frappe.whitelist(allow_guest=True)                   
 def production_CSID():    
@@ -411,9 +412,6 @@ def production_CSID():
                     compliance_request_id = settings.get("compliance_request_id", "{}")
                     compliance_request_id_data = json.loads(compliance_request_id)
                     request_id = get_request_id_for_company(compliance_request_id_data, company_name)
-                    # print(request_id)
-                    # print(csid)
-                    
                     payload = json.dumps({
                             "compliance_request_id": request_id
                         })
@@ -433,8 +431,6 @@ def production_CSID():
                     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
                     with open(f"{company_name}.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
-
-# Check if basic_auth_production contains a valid JSON string
                     basic_auth_production = settings.get("basic_auth_production", "{}")
                     try:
                         basic_auth_production_data = json.loads(basic_auth_production)
@@ -497,30 +493,31 @@ def attach_QR_Image_For_Reporting(qr_code_value,sales_invoice_doc):
                         frappe.throw("Error in qr image attach for reporting api   " + str(e)) 
 
 def get_production_csid_for_company(basic_auth_production_data, company_name):
-                    
-                    for entry in basic_auth_production_data.get("companies", []):
-                        if entry.get("company") == company_name:
-                            return entry.get("production_csid")
-                    return None
+                    try:  
+                        for entry in basic_auth_production_data.get("companies", []):
+                            if entry.get("company") == company_name:
+                                return entry.get("production_csid")
+                        return None
+                    except Exception as e:
+                            frappe.throw("Error in getting production csid of company for api   " + str(e)) 
 
 def update_json_data_pih(existing_data, company_name, pih):
-    # Check if the company already exists in the data
-    company_exists = False
-    for entry in existing_data["data"]:
-        if entry["company"] == company_name:
-            # Update the PIH for the existing company
-            entry["PIH"] = pih
-            company_exists = True
-            break
-
-    # If the company does not exist, add a new entry
-    if not company_exists:
-        existing_data["data"].append({
-            "company": company_name,
-            "PIH": pih
-        })
-
-    return existing_data
+                    try:
+                        company_exists = False
+                        for entry in existing_data["data"]:
+                            if entry["company"] == company_name:
+                                # Update the PIH for the existing company
+                                entry["PIH"] = pih
+                                company_exists = True
+                                break
+                        if not company_exists:
+                            existing_data["data"].append({
+                                "company": company_name,
+                                "PIH": pih
+                            })
+                        return existing_data
+                    except Exception as e:
+                                        frappe.throw("Error in json data of pih  " + str(e)) 
 
 
 def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invoice_doc):
