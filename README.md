@@ -2,6 +2,8 @@
 
 Saudi VAT Phase-2 implementation according to new Zatca Guidelines 2024
 
+Features for Multiple companies added
+
 License mit#
 
 This app is compliant with the new Zatca e-invoicing document published in 2024.
