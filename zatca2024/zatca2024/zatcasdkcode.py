@@ -80,38 +80,40 @@ def get_latest_generated_csr_file(folder_path='.'):
 
 @frappe.whitelist(allow_guest=True)
 def generate_csr():
-            try:
-                settings=frappe.get_doc('Zatca setting')
-                csr_config_file = 'sdkcsrconfig.properties'
-                private_key_file = 'sdkprivatekey.pem'
-                generated_csr_file = 'sdkcsr.pem'
-                SDK_ROOT=settings.sdk_root
-                path_string=f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG=config.json && export PATH=$PATH:$FATOORA_HOME &&  "
-                
-                if settings.select == "Simulation":
-                    command_generate_csr =  path_string  + f'fatoora -sim -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
-                else:
-                    command_generate_csr =  path_string  + f'fatoora -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
-                
                 try:
-                    err,out = _execute_in_shell(command_generate_csr)
-                    frappe.msgprint(out)
-                    with open(get_latest_generated_csr_file(), "r") as file_csr:
-                        get_csr = file_csr.read()
-                    file = frappe.get_doc({
+                    settings = frappe.get_doc('Zatca setting')
+                    company_name = settings.company.replace(" ", "-")
+                    csr_config_file = f'{company_name}.properties'
+                    private_key_file = f'{company_name}-privatekey.pem'
+                    generated_csr_file = 'sdkcsr.pem'
+                    SDK_ROOT = settings.sdk_root
+                    sdk_config_file = f'{company_name}.json'
+
+                    path_string = f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config_file} && export PATH=$PATH:$FATOORA_HOME &&  "
+                    if settings.select == "Simulation":
+                        command_generate_csr = path_string + f'fatoora -sim -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
+                    else:
+                        command_generate_csr = path_string + f'fatoora -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
+
+                    try:
+                        err, out = _execute_in_shell(command_generate_csr)
+                        print(out)
+                        with open(get_latest_generated_csr_file(), "r") as file_csr:
+                            get_csr = file_csr.read()
+                        file = frappe.get_doc({
                             "doctype": "File",
                             "file_name": f"generated-csr-{settings.name}.csr",
                             "attached_to_doctype": settings.doctype,
                             "attached_to_name": settings.name,
-                            "content": get_csr 
-                            })
-                    file.save(ignore_permissions=True)
-                    frappe.msgprint("CSR generation successful. CSR saved")
+                            "content": get_csr
+                        })
+                        file.save(ignore_permissions=True)
+                        frappe.msgprint("CSR generation successful. CSR saved")
+                    except Exception as e:
+                        frappe.throw(err)
+                        frappe.throw("An error occurred: " + str(e))
                 except Exception as e:
-                    frappe.throw(err)
-                    frappe.throw("An error occurred: " + str(e))
-            except Exception as e:
-                    frappe.throw("error occured in generate csr"+ str(e) )
+                    frappe.throw("error occured in generate csr" + str(e)) 
 
 
 def get_API_url(base_url):
@@ -127,11 +129,70 @@ def get_API_url(base_url):
                 except Exception as e:
                     frappe.throw(" getting url failed"+ str(e) ) 
 
+def update_json_data_csid(existing_data, company_name, csid):
+    # Check if the company already exists in the data
+    company_exists = False
+    for entry in existing_data["data"]:
+        if entry["company"] == company_name:
+            # Update the csid for the existing company
+            entry["csid"] = csid
+            company_exists = True
+            break
+
+    # If the company does not exist, add a new entry
+    if not company_exists:
+        existing_data["data"].append({
+            "company": company_name,
+            "csid": csid
+        })
+
+    return existing_data
+
+def update_json_data_request_id(existing_data, company_name, request_id):
+    # Check if the company already exists in the data
+    company_exists = False
+    for entry in existing_data["data"]:
+        if entry["company"] == company_name:
+            # Update the request_id for the existing company
+            entry["request_id"] = request_id
+            company_exists = True
+            break
+
+    # If the company does not exist, add a new entry
+    if not company_exists:
+        existing_data["data"].append({
+            "company": company_name,
+            "request_id": request_id
+        })
+
+    return existing_data
+
+
+def update_json_data_production_csid(existing_data, company_name, production_csid):
+    # Check if the company already exists in the data
+    company_exists = False
+    for entry in existing_data["companies"]:
+        if entry["company"] == company_name:
+            # Update the production_csid for the existing company
+            entry["production_csid"] = production_csid
+            company_exists = True
+            break
+
+    # If the company does not exist, add a new entry
+    if not company_exists:
+        existing_data["companies"].append({
+            "company": company_name,
+            "production_csid": production_csid
+        })
+
+    return existing_data
+
 @frappe.whitelist(allow_guest=True)
 def create_CSID(): 
                 try:
                     # set_cert_path()
-                    settings=frappe.get_doc('Zatca setting')     
+                    settings=frappe.get_doc('Zatca setting')
+                    company_name = settings.company.replace(" ", "-") 
                     with open(get_latest_generated_csr_file(), "r") as f:
                         csr_contents = f.read()
                     payload = json.dumps({
@@ -159,24 +220,39 @@ def create_CSID():
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
                     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
 
-                    with open(f"cert.pem", 'w') as file:   #attaching X509 certificate
+                    with open(f"{company_name}.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
+                    basic_auth = settings.get("basic_auth", "{}")
+                    try:
+                        basic_auth_data = json.loads(basic_auth)
+                    except json.JSONDecodeError:
+                        basic_auth_data = {"data": []}
+                    updated_basic_auth_data = update_json_data_csid(basic_auth_data, company_name, encoded_value)
+                    settings.set("basic_auth", json.dumps(updated_basic_auth_data))
+                    compliance_request_id = settings.get("compliance_request_id", "{}")
+                    try:
+                        compliance_request_id_data = json.loads(compliance_request_id)
+                        # Ensure that compliance_request_id_data is a dictionary with a "data" key.
+                        if not isinstance(compliance_request_id_data, dict) or "data" not in compliance_request_id_data:
+                            raise ValueError("Invalid format for compliance_request_id_data")
+                    except (json.JSONDecodeError, ValueError):
+                        compliance_request_id_data = {"data": []}
 
-                    settings.set("basic_auth", encoded_value)
-                    settings.save(ignore_permissions=True)
-                    settings.set("compliance_request_id",data["requestID"])
+                    updated_compliance_request_id_data = update_json_data_request_id(compliance_request_id_data, company_name, data["requestID"])
+                    settings.set("compliance_request_id", json.dumps(updated_compliance_request_id_data))
                     settings.save(ignore_permissions=True)
                 except Exception as e:
                             frappe.throw("error in csid formation: " + str(e))
-
-                    
+     
 def sign_invoice():
                 try:
                     settings=frappe.get_doc('Zatca setting')
+                    company_name = settings.company.replace(" ", "-")
                     xmlfile_name = 'finalzatcaxml.xml'
                     signed_xmlfile_name = 'sdsign.xml'
                     SDK_ROOT= settings.sdk_root
-                    path_string=f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG=config.json && export PATH=$PATH:$FATOORA_HOME &&  "
+                    sdk_config_file = f'{company_name}.json'
+                    path_string = f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config_file} && export PATH=$PATH:$FATOORA_HOME &&  "
                     
                     command_sign_invoice = path_string  + f'fatoora -sign -invoice {xmlfile_name} -signedInvoice {signed_xmlfile_name}'
                     # frappe.throw(command_sign_invoice)
@@ -204,7 +280,7 @@ def sign_invoice():
                         frappe.throw(err,out)
                 except Exception as e:
                     frappe.throw("An error occurred sign invoice : " + str(e))
-            
+
 def generate_qr_code(signed_xmlfile_name,sales_invoice_doc,path_string):
                 try:
                     with open(signed_xmlfile_name, 'r') as file:
@@ -272,6 +348,12 @@ def xml_base64_Decode(signed_xmlfile_name):
                                         return base64_decoded
                     except Exception as e:
                         frappe.throw("Error in xml base64:  " + str(e) )
+                        
+def get_csid_for_company(basic_auth_data, company_name):
+                    for entry in basic_auth_data.get("data", []):
+                        if entry.get("company") == company_name:
+                            return entry.get("csid")
+                    return None
 
 def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                 # frappe.throw("inside compliance api call")
@@ -281,12 +363,22 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
                         "invoice": xml_base64_Decode(signed_xmlfile_name) })
-                    headers = {
-                        'accept': 'application/json',
-                        'Accept-Language': 'en',
-                        'Accept-Version': 'V2',
-                        'Authorization': "Basic" + settings.basic_auth,
-                        'Content-Type': 'application/json'  }
+                    company_name = settings.company.replace(" ", "-")
+                    basic_auth = settings.get("basic_auth", "{}")
+                    basic_auth_data = json.loads(basic_auth)
+                    csid = get_csid_for_company(basic_auth_data, company_name)
+
+                    if csid:
+                        headers = {
+                            'accept': 'application/json',
+                            'Accept-Language': 'en',
+                            'Accept-Version': 'V2',
+                            'Authorization': "Basic " + csid,
+                            'Content-Type': 'application/json'
+                        }
+                    else:
+                        # Handle the case where the CSID is not found
+                        frappe.throw("CSID for company {} not found".format(company_name))
                     try:
                         # frappe.throw("inside compliance api call2")
                         response = requests.request("POST", url=get_API_url(base_url="compliance/invoices"), headers=headers, data=payload)
@@ -294,38 +386,65 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                         # return response.text
 
                         if response.status_code != 200:
-                            frappe.throw("Error: " + str(response.text))    
+                            frappe.throw("Error in complaince: " + str(response.text))    
                     
                     except Exception as e:
                         frappe.msgprint(str(e))
-                        return "error", "NOT ACCEPTED"
+                        return "error in compliance", "NOT ACCEPTED"
                 except Exception as e:
                     frappe.throw("ERROR in clearance invoice ,zatca validation:  " + str(e) )
+
+def get_request_id_for_company(compliance_request_id_data, company_name):
+                for entry in compliance_request_id_data.get("data", []):
+                    if entry.get("company") == company_name:
+                        return entry.get("request_id")
+                return None
 
 @frappe.whitelist(allow_guest=True)                   
 def production_CSID():    
                 try:
                     settings = frappe.get_doc('Zatca setting')
+                    company_name = settings.company.replace(" ", "-")
+                    basic_auth = settings.get("basic_auth", "{}")
+                    basic_auth_data = json.loads(basic_auth)
+                    csid = get_csid_for_company(basic_auth_data, company_name)
+                    compliance_request_id = settings.get("compliance_request_id", "{}")
+                    compliance_request_id_data = json.loads(compliance_request_id)
+                    request_id = get_request_id_for_company(compliance_request_id_data, company_name)
+                    # print(request_id)
+                    # print(csid)
+                    
                     payload = json.dumps({
-                    "compliance_request_id": settings.compliance_request_id })
+                            "compliance_request_id": request_id
+                        })
                    
                     headers = {
                     'accept': 'application/json',
                     'Accept-Version': 'V2',
-                    'Authorization': 'Basic'+ settings.basic_auth,
+                    'Authorization': 'Basic'+ csid,
                     # 'Authorization': 'Basic'+ "VkZWc1NsRXhTalpSTUU1Q1dsaHNibEZZWkVwUmEwWnVVMVZrUWxkWWJGcFhhazAxVTJzeFFtSXdaRVJSTTBaSVZUQXdNRTlWU2tKVVZVNU9VV3hXTkZKWWNFSlZhMHB1Vkd4YVExRlZNVTVSTWpGWFUyMUtkVmR1V21oV01EVjNXVzB4YW1Rd2FHOVpNRFZPWVdzeE5GUlhjRXBsYXpGeFVWaHdVRlpGYkRaV01taHFWR3N4Y1ZvemFFNWhhMncxVkZkd1JtUXdNVVZSV0dSWVlXdEpNVlJXUm5wa01FNVNWMVZTVjFWV1JraFNXR1JMVmtaR1ZWSldiRTVSYkd4SVVWUkdWbEpWVGpOa01VSk9aV3RHTTFReFVtcGtNRGxGVVZSS1RsWkZSak5VVlZKQ1pXc3hWRm96WkV0YU1XeEZWbXhHVWxNd1VrTlBWVXBzVWpKNE5sTlZWbk5rVjAxNlVXMTRXazB4U25kWmFra3dXakZGZVU5WVZtdFRSWEJ2VjFST1UyTkhTblJaTW1SVVlrVTFSVlJXVGxwa01IQkNWMVZTVjFWV1JrVlNSVWw0VmxaVmVGVllVbEJTUjJONVZHdFNUbVZGTVZWVlZFWk5Wa1V4TTFSVlVuSk5NREZGV2pOa1QyRnJWak5VVlZKQ1pEQXhObEZzWkU1UmEwWklVVzVzZUZJeFRrNU9SR3hDV2pCV1NGRnNUakZSYTBwQ1VWVjBRazFGYkVKUmEzaFNZVWhDV1UxRlNrVmtSVVpTVDFWS05rOUhaM2ROYms1M1ZrWkdTbFZWVGpKT1YyYzBWRmhHTkdGRVVuQlRSVEYzVVcwNGRsRnRPWEJXUm1ScllsTjBVMWRYV2t0aVZYQlBaR3BrV1dSdVZUVk5NbHAyVjFjME1FNVVhRTlTTVVwdVltNW5NazVIV2xkaGJUbFdUREZDTVdGdFpHcFhXR1J1V1RBeE0xSkZSbHBTUmxwVFRVWlNRbFZWWjNaUmEwWktaREJHUlZFd1NucGFNV3hGVm14SmQxVnJTa3BTTTBaT1UxVmtkV05GYkVoaE1ERktVakpvVGxaSVRqTlVNVVphVWtaYVVsVlZWa1ZTUld3MFZFWmFVMVpHV2tsa00yeE5WbXhLVlZacmFETmxhM2hZVm0xMFRtRnJjSFJVVm1SU1RrVjRXRlpVU2xwV1JXd3dWRlpTUm1WRk9VUk5SRlphWVd4Vk1GUkdaRkpPVm14VllVY3hUbFpGV25OVWExSlNUVlp3Y1ZKWFdrNVJha0pJVVRKa2RGVXdjSFppVmxFMFlWaG9jbEZXUmtaVVZWSTJWRmhrVGxKSGMzcFVWVkp1WkRBMWNWSllaRTVTUlVZelZGaHdSbFJyTVVKak1HUkNUVlpXUmxKRlJqTlNWVEZWVWxob1RsWkZWbE5VVlVVMFVqQkZlRlpWVmtoYU0yUktWbGQ0UzFVeFNrVlRWRlpPWVcxME5GTkljRUphUlVwdVZHeGFRMUZVYUU1U2JYaExZa1pzV0dReVpHRlhSVFIzVjFab1UySkZiRWhTYlhCclVqSjNlVmxXYUZOalJuQlpWRmhrUkZveGJFcFRNamxoVTFod2NVMUZWa0prTUd4RlZURkdRbVF4U201VFYyaENWRmhHVTFOclJYSlZSRTVKVkVac2FWUXdNRFJPVldoTFRETmtUMlZ0UmxkT01XUnFXbTVKZGxkcVRqRmpWR3hMVFRCV1ZHTnNXbHBsYTBad1VsVkdkazV0YUdwUFZGSlRVMGR3YldRelRuZFpVemwzVjBaYWRWWnBPWFpWVjBaT1QxUk9hVTVzU1RKaVYyUmhWMFJDTVZGV1RYbE5WVnB1VUZFOVBRPT06eXRabHl6YklXY0wrUHlETytFd1JqWHRHSEp4SHB3cXdJYUVsaGxMQVJZQT0=",
                     # 'Authorization': 'Basic'+ "VFVsSlExSjZRME5CWlhsblFYZEpRa0ZuU1VkQldYbFpXak01U2sxQmIwZERRM0ZIVTAwME9VSkJUVU5OUWxWNFJYcEJVa0puVGxaQ1FVMU5RMjFXU21KdVduWmhWMDV3WW0xamQwaG9ZMDVOYWsxNFRXcEplazFxUVhwUFZFbDZWMmhqVGsxcVozaE5ha2w1VFdwRmQwMUVRWGRYYWtJMVRWRnpkME5SV1VSV1VWRkhSWGRLVkZGVVJWbE5RbGxIUVRGVlJVTjNkMUJOZWtGM1QxUmpkMDlFUVRKTlZFRjNUVVJCZWsxVFozZEtaMWxFVmxGUlMwUkNPVUpsUjJ4NlNVVnNkV016UW14Wk0xSndZakkwWjFFeU9YVmtTRXBvV1ROU2NHSnRZMmRUYkU1RVRWTlpkMHBCV1VSV1VWRkVSRUl4VlZVeFVYUlBSR2N5VGtSTmVFMVVVVEZNVkUxM1RVUnJNMDFFWjNkT2FrVjNUVVJCZDAxNlFsZE5Ra0ZIUW5seFIxTk5ORGxCWjBWSFFsTjFRa0pCUVV0Qk1FbEJRa3hSYUhCWU1FSkVkRUZST1VKNk9HZ3dNbk53VkZGSlVVTjJOV2c0VFhGNGFEUnBTRTF3UW04dlFtOXBWRmRrYlN0U1dXWktiVXBPZGpkWWRuVTVNMlp2V1c0ME5UaE9SMUpuYm5nMk5HWldhbTlWTDFCMWFtZGpXWGRuWTAxM1JFRlpSRlpTTUZSQlVVZ3ZRa0ZKZDBGRVEwSnpaMWxFVmxJd1VrSkpSM0ZOU1VkdWNFbEhhMDFKUjJoTlZITjNUMUZaUkZaUlVVVkVSRWw0VEZaU1ZGWklkM2xNVmxKVVZraDNla3hYVm10TmFrcHRUVmRSTkV4WFZUSlpWRWwwVFZSRmVFOURNRFZaYWxVMFRGZFJOVmxVYUcxTlZFWnNUa1JSTVZwcVJXWk5RakJIUTJkdFUwcHZiVlE0YVhoclFWRkZUVVI2VFhkTlJHc3pUVVJuZDA1cVJYZE5SRUYzVFhwRlRrMUJjMGRCTVZWRlJFRjNSVTFVUlhoTlZFVlNUVUU0UjBFeFZVVkhaM2RKVld4S1UxSkVTVFZOYW10NFNIcEJaRUpuVGxaQ1FUaE5SbXhLYkZsWGQyZGFXRTR3V1ZoU2JFbEhSbXBrUjJ3eVlWaFNjRnBZVFhkRFoxbEpTMjlhU1hwcU1FVkJkMGxFVTFGQmQxSm5TV2hCVFhGU1NrRXJVRE5JVEZsaVQwMDROVWhLTDNkT2VtRldOMWRqWm5JdldqTjFjVGxLTTBWVGNsWlpla0ZwUlVGdk5taGpPVFJTU0dwbWQzTndZUzl3V0ZadVZpOXZVV0ZOT1ROaU5sSTJiV2RhV0RCMVFWTXlNVVpuUFE9PTp5dFpseXpiSVdjTCtQeURPK0V3UmpYdEdISnhIcHdxd0lhRWxobExBUllBPQ==",
                     'Content-Type': 'application/json' }
                     response = requests.request("POST", url=get_API_url(base_url="production/csids"), headers=headers, data=payload)
                     if response.status_code != 200:
-                        frappe.throw("Error: " + str(response.text))
+                        frappe.throw("Error in production: " + str(response.text))
                     data=json.loads(response.text)
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
                     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
-                    with open(f"cert.pem", 'w') as file:   #attaching X509 certificate
+                    with open(f"{company_name}.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
-                    settings.set("basic_auth_production", encoded_value)
+
+# Check if basic_auth_production contains a valid JSON string
+                    basic_auth_production = settings.get("basic_auth_production", "{}")
+                    try:
+                        basic_auth_production_data = json.loads(basic_auth_production)
+                    except json.JSONDecodeError:
+                        basic_auth_production_data = {"companies": []}
+
+                    updated_data = update_json_data_production_csid(basic_auth_production_data, company_name, encoded_value)
+                    settings.set("basic_auth_production", json.dumps(updated_data))
                     settings.save(ignore_permissions=True)
+
                 except Exception as e:
                     frappe.throw("error in  production csid formation:  " + str(e) )
 
@@ -375,28 +494,63 @@ def attach_QR_Image_For_Reporting(qr_code_value,sales_invoice_doc):
                             })
                             file.save(ignore_permissions=True)
                     except Exception as e:
-                        frappe.throw("Error in qr image attach for reporting api   " + str(e))   
+                        frappe.throw("Error in qr image attach for reporting api   " + str(e)) 
+
+def get_production_csid_for_company(basic_auth_production_data, company_name):
+                    
+                    for entry in basic_auth_production_data.get("companies", []):
+                        if entry.get("company") == company_name:
+                            return entry.get("production_csid")
+                    return None
+
+def update_json_data_pih(existing_data, company_name, pih):
+    # Check if the company already exists in the data
+    company_exists = False
+    for entry in existing_data["data"]:
+        if entry["company"] == company_name:
+            # Update the PIH for the existing company
+            entry["PIH"] = pih
+            company_exists = True
+            break
+
+    # If the company does not exist, add a new entry
+    if not company_exists:
+        existing_data["data"].append({
+            "company": company_name,
+            "PIH": pih
+        })
+
+    return existing_data
+
 
 def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invoice_doc):
                     try:
                         settings = frappe.get_doc('Zatca setting')
+                        company_name = settings.company.replace(" ", "-")
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
                         "invoice": xml_base64_Decode(signed_xmlfile_name),
                         })
-                        headers = {
-                        'accept': 'application/json',
-                        'accept-language': 'en',
-                        'Clearance-Status': '0',
-                        'Accept-Version': 'V2',
-                        # 'Authorization': "Basic VFVsSlJESjZRME5CTkVOblFYZEpRa0ZuU1ZSaWQwRkJaSEZFYlVsb2NYTnFjRzAxUTNkQlFrRkJRakp2UkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYWsxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSjNkMGRuV1VSV1VWRkVSWGhPVlZVeGNFWlRWVFZYVkRCc1JGSlRNVlJrVjBwRVVWTXdlRTFDTkZoRVZFbDVUVVJOZVU5RVJURk9SRmw2VFd4dldFUlVTWGxOUkUxNlRVUkZNVTVFV1hwTmJHOTNWRlJGVEUxQmEwZEJNVlZGUW1oTlExVXdSWGhFYWtGTlFtZE9Wa0pCYjFSQ1ZYQm9ZMjFzZVUxU2IzZEhRVmxFVmxGUlRFVjRSa3RhVjFKcldWZG5aMUZ1U21oaWJVNXZUVlJKZWs1RVJWTk5Ra0ZIUVRGVlJVRjRUVXBOVkVrelRHcEJkVTFETkhoTlJsbDNSVUZaU0V0dldrbDZhakJEUVZGWlJrczBSVVZCUVc5RVVXZEJSVVF2ZDJJeWJHaENka0pKUXpoRGJtNWFkbTkxYnpaUGVsSjViWGx0VlRsT1YxSm9TWGxoVFdoSFVrVkNRMFZhUWpSRlFWWnlRblZXTW5oWWFYaFpOSEZDV1dZNVpHUmxjbnByVnpsRWQyUnZNMGxzU0dkeFQwTkJhVzkzWjJkSmJVMUpSMHhDWjA1V1NGSkZSV2RaVFhkbldVTnJabXBDT0UxU2QzZEhaMWxFVmxGUlJVUkNUWGxOYWtsNVRXcE5lVTVFVVRCTmVsRjZZVzFhYlU1RVRYbE5VamgzU0ZGWlMwTmFTVzFwV2xCNVRFZFJRa0ZSZDFCTmVrVjNUVlJqTVUxNmF6Tk9SRUYzVFVSQmVrMVJNSGREZDFsRVZsRlJUVVJCVVhoTlJFVjRUVkpGZDBSM1dVUldVVkZoUkVGb1ZGbFhNWGRpUjFWblVsUkZXazFDWTBkQk1WVkZSSGQzVVZVeVJuUmpSM2hzU1VWS01XTXpUbkJpYlZaNlkzcEJaRUpuVGxaSVVUUkZSbWRSVldoWFkzTmlZa3BvYWtRMVdsZFBhM2RDU1V4REszZE9WbVpMV1hkSWQxbEVWbEl3YWtKQ1ozZEdiMEZWWkcxRFRTdDNZV2R5UjJSWVRsb3pVRzF4ZVc1TE5Xc3hkRk00ZDFSbldVUldVakJtUWtWamQxSlVRa1J2UlVkblVEUlpPV0ZJVWpCalJHOTJURE5TZW1SSFRubGlRelUyV1ZoU2FsbFROVzVpTTFsMVl6SkZkbEV5Vm5sa1JWWjFZMjA1YzJKRE9WVlZNWEJHVTFVMVYxUXdiRVJTVXpGVVpGZEtSRkZUTUhoTWJVNTVZa1JEUW5KUldVbExkMWxDUWxGVlNFRlJSVVZuWVVGM1oxb3dkMkpuV1VsTGQxbENRbEZWU0UxQlIwZFpiV2d3WkVoQk5reDVPVEJqTTFKcVkyMTNkV1Z0UmpCWk1rVjFXakk1TWt4dVRtaE1NRTVzWTI1U1JtSnVTblppUjNkMlZrWk9ZVkpYYkhWa2JUbHdXVEpXVkZFd1JYaE1iVlkwWkVka2FHVnVVWFZhTWpreVRHMTRkbGt5Um5OWU1WSlVWMnRXU2xSc1dsQlRWVTVHVEZaT01WbHJUa0pNVkVWdlRWTnJkVmt6U2pCTlEzTkhRME56UjBGUlZVWkNla0ZDYUdnNWIyUklVbmRQYVRoMlpFaE9NRmt6U25OTWJuQm9aRWRPYUV4dFpIWmthVFY2V1ZNNWRsa3pUbmROUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKU0dkRVFXUkNaMDVXU0ZOVlJVWnFRVlZDWjJkeVFtZEZSa0pSWTBSQloxbEpTM2RaUWtKUlZVaEJkMDEzU25kWlNrdDNXVUpDUVVkRFRuaFZTMEpDYjNkSFJFRkxRbWRuY2tKblJVWkNVV05FUVdwQlMwSm5aM0pDWjBWR1FsRmpSRUY2UVV0Q1oyZHhhR3RxVDFCUlVVUkJaMDVLUVVSQ1IwRnBSVUY1VG1oNVkxRXpZazVzVEVaa1QxQnNjVmxVTmxKV1VWUlhaMjVMTVVkb01FNUlaR05UV1RSUVprTXdRMGxSUTFOQmRHaFlkblkzZEdWMFZVdzJPVmRxY0RoQ2VHNU1URTEzWlhKNFdtaENibVYzYnk5blJqTkZTa0U5UFE9PTpmOVlSaG9wTi9HN3gwVEVDT1k2bktTQ0hMTllsYjVyaUFIU0ZQSUNvNHF3PQ==" ,
-                        # 'Authorization': "Basic VFVsSlJESjZRME5CTkVOblFYZEpRa0ZuU1ZSaWQwRkJaSEZFYlVsb2NYTnFjRzAxUTNkQlFrRkJRakp2UkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYWsxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSjNkMGRuV1VSV1VWRkVSWGhPVlZVeGNFWlRWVFZYVkRCc1JGSlRNVlJrVjBwRVVWTXdlRTFDTkZoRVZFbDVUVVJOZVU5RVJURk9SRmw2VFd4dldFUlVTWGxOUkUxNlRVUkZNVTVFV1hwTmJHOTNWRlJGVEUxQmEwZEJNVlZGUW1oTlExVXdSWGhFYWtGTlFtZE9Wa0pCYjFSQ1ZYQm9ZMjFzZVUxU2IzZEhRVmxFVmxGUlRFVjRSa3RhVjFKcldWZG5aMUZ1U21oaWJVNXZUVlJKZWs1RVJWTk5Ra0ZIUVRGVlJVRjRUVXBOVkVrelRHcEJkVTFETkhoTlJsbDNSVUZaU0V0dldrbDZhakJEUVZGWlJrczBSVVZCUVc5RVVXZEJSVVF2ZDJJeWJHaENka0pKUXpoRGJtNWFkbTkxYnpaUGVsSjViWGx0VlRsT1YxSm9TWGxoVFdoSFVrVkNRMFZhUWpSRlFWWnlRblZXTW5oWWFYaFpOSEZDV1dZNVpHUmxjbnByVnpsRWQyUnZNMGxzU0dkeFQwTkJhVzkzWjJkSmJVMUpSMHhDWjA1V1NGSkZSV2RaVFhkbldVTnJabXBDT0UxU2QzZEhaMWxFVmxGUlJVUkNUWGxOYWtsNVRXcE5lVTVFVVRCTmVsRjZZVzFhYlU1RVRYbE5VamgzU0ZGWlMwTmFTVzFwV2xCNVRFZFJRa0ZSZDFCTmVrVjNUVlJqTVUxNmF6Tk9SRUYzVFVSQmVrMVJNSGREZDFsRVZsRlJUVVJCVVhoTlJFVjRUVkpGZDBSM1dVUldVVkZoUkVGb1ZGbFhNWGRpUjFWblVsUkZXazFDWTBkQk1WVkZSSGQzVVZVeVJuUmpSM2hzU1VWS01XTXpUbkJpYlZaNlkzcEJaRUpuVGxaSVVUUkZSbWRSVldoWFkzTmlZa3BvYWtRMVdsZFBhM2RDU1V4REszZE9WbVpMV1hkSWQxbEVWbEl3YWtKQ1ozZEdiMEZWWkcxRFRTdDNZV2R5UjJSWVRsb3pVRzF4ZVc1TE5Xc3hkRk00ZDFSbldVUldVakJtUWtWamQxSlVRa1J2UlVkblVEUlpPV0ZJVWpCalJHOTJURE5TZW1SSFRubGlRelUyV1ZoU2FsbFROVzVpTTFsMVl6SkZkbEV5Vm5sa1JWWjFZMjA1YzJKRE9WVlZNWEJHVTFVMVYxUXdiRVJTVXpGVVpGZEtSRkZUTUhoTWJVNTVZa1JEUW5KUldVbExkMWxDUWxGVlNFRlJSVVZuWVVGM1oxb3dkMkpuV1VsTGQxbENRbEZWU0UxQlIwZFpiV2d3WkVoQk5reDVPVEJqTTFKcVkyMTNkV1Z0UmpCWk1rVjFXakk1TWt4dVRtaE1NRTVzWTI1U1JtSnVTblppUjNkMlZrWk9ZVkpYYkhWa2JUbHdXVEpXVkZFd1JYaE1iVlkwWkVka2FHVnVVWFZhTWpreVRHMTRkbGt5Um5OWU1WSlVWMnRXU2xSc1dsQlRWVTVHVEZaT01WbHJUa0pNVkVWdlRWTnJkVmt6U2pCTlEzTkhRME56UjBGUlZVWkNla0ZDYUdnNWIyUklVbmRQYVRoMlpFaE9NRmt6U25OTWJuQm9aRWRPYUV4dFpIWmthVFY2V1ZNNWRsa3pUbmROUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKU0dkRVFXUkNaMDVXU0ZOVlJVWnFRVlZDWjJkeVFtZEZSa0pSWTBSQloxbEpTM2RaUWtKUlZVaEJkMDEzU25kWlNrdDNXVUpDUVVkRFRuaFZTMEpDYjNkSFJFRkxRbWRuY2tKblJVWkNVV05FUVdwQlMwSm5aM0pDWjBWR1FsRmpSRUY2UVV0Q1oyZHhhR3RxVDFCUlVVUkJaMDVLUVVSQ1IwRnBSVUY1VG1oNVkxRXpZazVzVEVaa1QxQnNjVmxVTmxKV1VWUlhaMjVMTVVkb01FNUlaR05UV1RSUVprTXdRMGxSUTFOQmRHaFlkblkzZEdWMFZVdzJPVmRxY0RoQ2VHNU1URTEzWlhKNFdtaENibVYzYnk5blJqTkZTa0U5UFE9PTpmOVlSaG9wTi9HN3gwVEVDT1k2bktTQ0hMTllsYjVyaUFIU0ZQSUNvNHF3PQ==",
-                        # 'Authorization': 'Basic' + settings.basic_auth_production,
-                        'Authorization': 'Basic' + settings.basic_auth_production,
-                        'Content-Type': 'application/json',
-                        'Cookie': 'TS0106293e=0132a679c0639d13d069bcba831384623a2ca6da47fac8d91bef610c47c7119dcdd3b817f963ec301682dae864351c67ee3a402866'
-                        }
+                        basic_auth_production = settings.get("basic_auth_production", "{}")
+                        basic_auth_production_data = json.loads(basic_auth_production)
+                        production_csid = get_production_csid_for_company(basic_auth_production_data, company_name)
+
+                        if production_csid:
+                            headers = {
+                                'accept': 'application/json',
+                                    'accept-language': 'en',
+                                    'Clearance-Status': '0',
+                                    'Accept-Version': 'V2',
+                                    # 'Authorization': "Basic VFVsSlJESjZRME5CTkVOblFYZEpRa0ZuU1ZSaWQwRkJaSEZFYlVsb2NYTnFjRzAxUTNkQlFrRkJRakp2UkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYWsxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSjNkMGRuV1VSV1VWRkVSWGhPVlZVeGNFWlRWVFZYVkRCc1JGSlRNVlJrVjBwRVVWTXdlRTFDTkZoRVZFbDVUVVJOZVU5RVJURk9SRmw2VFd4dldFUlVTWGxOUkUxNlRVUkZNVTVFV1hwTmJHOTNWRlJGVEUxQmEwZEJNVlZGUW1oTlExVXdSWGhFYWtGTlFtZE9Wa0pCYjFSQ1ZYQm9ZMjFzZVUxU2IzZEhRVmxFVmxGUlRFVjRSa3RhVjFKcldWZG5aMUZ1U21oaWJVNXZUVlJKZWs1RVJWTk5Ra0ZIUVRGVlJVRjRUVXBOVkVrelRHcEJkVTFETkhoTlJsbDNSVUZaU0V0dldrbDZhakJEUVZGWlJrczBSVVZCUVc5RVVXZEJSVVF2ZDJJeWJHaENka0pKUXpoRGJtNWFkbTkxYnpaUGVsSjViWGx0VlRsT1YxSm9TWGxoVFdoSFVrVkNRMFZhUWpSRlFWWnlRblZXTW5oWWFYaFpOSEZDV1dZNVpHUmxjbnByVnpsRWQyUnZNMGxzU0dkeFQwTkJhVzkzWjJkSmJVMUpSMHhDWjA1V1NGSkZSV2RaVFhkbldVTnJabXBDT0UxU2QzZEhaMWxFVmxGUlJVUkNUWGxOYWtsNVRXcE5lVTVFVVRCTmVsRjZZVzFhYlU1RVRYbE5VamgzU0ZGWlMwTmFTVzFwV2xCNVRFZFJRa0ZSZDFCTmVrVjNUVlJqTVUxNmF6Tk9SRUYzVFVSQmVrMVJNSGREZDFsRVZsRlJUVVJCVVhoTlJFVjRUVkpGZDBSM1dVUldVVkZoUkVGb1ZGbFhNWGRpUjFWblVsUkZXazFDWTBkQk1WVkZSSGQzVVZVeVJuUmpSM2hzU1VWS01XTXpUbkJpYlZaNlkzcEJaRUpuVGxaSVVUUkZSbWRSVldoWFkzTmlZa3BvYWtRMVdsZFBhM2RDU1V4REszZE9WbVpMV1hkSWQxbEVWbEl3YWtKQ1ozZEdiMEZWWkcxRFRTdDNZV2R5UjJSWVRsb3pVRzF4ZVc1TE5Xc3hkRk00ZDFSbldVUldVakJtUWtWamQxSlVRa1J2UlVkblVEUlpPV0ZJVWpCalJHOTJURE5TZW1SSFRubGlRelUyV1ZoU2FsbFROVzVpTTFsMVl6SkZkbEV5Vm5sa1JWWjFZMjA1YzJKRE9WVlZNWEJHVTFVMVYxUXdiRVJTVXpGVVpGZEtSRkZUTUhoTWJVNTVZa1JEUW5KUldVbExkMWxDUWxGVlNFRlJSVVZuWVVGM1oxb3dkMkpuV1VsTGQxbENRbEZWU0UxQlIwZFpiV2d3WkVoQk5reDVPVEJqTTFKcVkyMTNkV1Z0UmpCWk1rVjFXakk1TWt4dVRtaE1NRTVzWTI1U1JtSnVTblppUjNkMlZrWk9ZVkpYYkhWa2JUbHdXVEpXVkZFd1JYaE1iVlkwWkVka2FHVnVVWFZhTWpreVRHMTRkbGt5Um5OWU1WSlVWMnRXU2xSc1dsQlRWVTVHVEZaT01WbHJUa0pNVkVWdlRWTnJkVmt6U2pCTlEzTkhRME56UjBGUlZVWkNla0ZDYUdnNWIyUklVbmRQYVRoMlpFaE9NRmt6U25OTWJuQm9aRWRPYUV4dFpIWmthVFY2V1ZNNWRsa3pUbmROUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKU0dkRVFXUkNaMDVXU0ZOVlJVWnFRVlZDWjJkeVFtZEZSa0pSWTBSQloxbEpTM2RaUWtKUlZVaEJkMDEzU25kWlNrdDNXVUpDUVVkRFRuaFZTMEpDYjNkSFJFRkxRbWRuY2tKblJVWkNVV05FUVdwQlMwSm5aM0pDWjBWR1FsRmpSRUY2UVV0Q1oyZHhhR3RxVDFCUlVVUkJaMDVLUVVSQ1IwRnBSVUY1VG1oNVkxRXpZazVzVEVaa1QxQnNjVmxVTmxKV1VWUlhaMjVMTVVkb01FNUlaR05UV1RSUVprTXdRMGxSUTFOQmRHaFlkblkzZEdWMFZVdzJPVmRxY0RoQ2VHNU1URTEzWlhKNFdtaENibVYzYnk5blJqTkZTa0U5UFE9PTpmOVlSaG9wTi9HN3gwVEVDT1k2bktTQ0hMTllsYjVyaUFIU0ZQSUNvNHF3PQ==" ,
+                                    # 'Authorization': "Basic VFVsSlJESjZRME5CTkVOblFYZEpRa0ZuU1ZSaWQwRkJaSEZFYlVsb2NYTnFjRzAxUTNkQlFrRkJRakp2UkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYWsxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSjNkMGRuV1VSV1VWRkVSWGhPVlZVeGNFWlRWVFZYVkRCc1JGSlRNVlJrVjBwRVVWTXdlRTFDTkZoRVZFbDVUVVJOZVU5RVJURk9SRmw2VFd4dldFUlVTWGxOUkUxNlRVUkZNVTVFV1hwTmJHOTNWRlJGVEUxQmEwZEJNVlZGUW1oTlExVXdSWGhFYWtGTlFtZE9Wa0pCYjFSQ1ZYQm9ZMjFzZVUxU2IzZEhRVmxFVmxGUlRFVjRSa3RhVjFKcldWZG5aMUZ1U21oaWJVNXZUVlJKZWs1RVJWTk5Ra0ZIUVRGVlJVRjRUVXBOVkVrelRHcEJkVTFETkhoTlJsbDNSVUZaU0V0dldrbDZhakJEUVZGWlJrczBSVVZCUVc5RVVXZEJSVVF2ZDJJeWJHaENka0pKUXpoRGJtNWFkbTkxYnpaUGVsSjViWGx0VlRsT1YxSm9TWGxoVFdoSFVrVkNRMFZhUWpSRlFWWnlRblZXTW5oWWFYaFpOSEZDV1dZNVpHUmxjbnByVnpsRWQyUnZNMGxzU0dkeFQwTkJhVzkzWjJkSmJVMUpSMHhDWjA1V1NGSkZSV2RaVFhkbldVTnJabXBDT0UxU2QzZEhaMWxFVmxGUlJVUkNUWGxOYWtsNVRXcE5lVTVFVVRCTmVsRjZZVzFhYlU1RVRYbE5VamgzU0ZGWlMwTmFTVzFwV2xCNVRFZFJRa0ZSZDFCTmVrVjNUVlJqTVUxNmF6Tk9SRUYzVFVSQmVrMVJNSGREZDFsRVZsRlJUVVJCVVhoTlJFVjRUVkpGZDBSM1dVUldVVkZoUkVGb1ZGbFhNWGRpUjFWblVsUkZXazFDWTBkQk1WVkZSSGQzVVZVeVJuUmpSM2hzU1VWS01XTXpUbkJpYlZaNlkzcEJaRUpuVGxaSVVUUkZSbWRSVldoWFkzTmlZa3BvYWtRMVdsZFBhM2RDU1V4REszZE9WbVpMV1hkSWQxbEVWbEl3YWtKQ1ozZEdiMEZWWkcxRFRTdDNZV2R5UjJSWVRsb3pVRzF4ZVc1TE5Xc3hkRk00ZDFSbldVUldVakJtUWtWamQxSlVRa1J2UlVkblVEUlpPV0ZJVWpCalJHOTJURE5TZW1SSFRubGlRelUyV1ZoU2FsbFROVzVpTTFsMVl6SkZkbEV5Vm5sa1JWWjFZMjA1YzJKRE9WVlZNWEJHVTFVMVYxUXdiRVJTVXpGVVpGZEtSRkZUTUhoTWJVNTVZa1JEUW5KUldVbExkMWxDUWxGVlNFRlJSVVZuWVVGM1oxb3dkMkpuV1VsTGQxbENRbEZWU0UxQlIwZFpiV2d3WkVoQk5reDVPVEJqTTFKcVkyMTNkV1Z0UmpCWk1rVjFXakk1TWt4dVRtaE1NRTVzWTI1U1JtSnVTblppUjNkMlZrWk9ZVkpYYkhWa2JUbHdXVEpXVkZFd1JYaE1iVlkwWkVka2FHVnVVWFZhTWpreVRHMTRkbGt5Um5OWU1WSlVWMnRXU2xSc1dsQlRWVTVHVEZaT01WbHJUa0pNVkVWdlRWTnJkVmt6U2pCTlEzTkhRME56UjBGUlZVWkNla0ZDYUdnNWIyUklVbmRQYVRoMlpFaE9NRmt6U25OTWJuQm9aRWRPYUV4dFpIWmthVFY2V1ZNNWRsa3pUbmROUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKU0dkRVFXUkNaMDVXU0ZOVlJVWnFRVlZDWjJkeVFtZEZSa0pSWTBSQloxbEpTM2RaUWtKUlZVaEJkMDEzU25kWlNrdDNXVUpDUVVkRFRuaFZTMEpDYjNkSFJFRkxRbWRuY2tKblJVWkNVV05FUVdwQlMwSm5aM0pDWjBWR1FsRmpSRUY2UVV0Q1oyZHhhR3RxVDFCUlVVUkJaMDVLUVVSQ1IwRnBSVUY1VG1oNVkxRXpZazVzVEVaa1QxQnNjVmxVTmxKV1VWUlhaMjVMTVVkb01FNUlaR05UV1RSUVprTXdRMGxSUTFOQmRHaFlkblkzZEdWMFZVdzJPVmRxY0RoQ2VHNU1URTEzWlhKNFdtaENibVYzYnk5blJqTkZTa0U5UFE9PTpmOVlSaG9wTi9HN3gwVEVDT1k2bktTQ0hMTllsYjVyaUFIU0ZQSUNvNHF3PQ==",
+                                    # 'Authorization': 'Basic' + settings.basic_auth_production,
+                                    'Authorization': 'Basic' + production_csid,
+                                    'Content-Type': 'application/json',
+                                    'Cookie': 'TS0106293e=0132a679c0639d13d069bcba831384623a2ca6da47fac8d91bef610c47c7119dcdd3b817f963ec301682dae864351c67ee3a402866'
+                                    }    
+                        else:
+                            frappe.throw("Production CSID for company {} not found".format(company_name))
                         try:
                             response = requests.request("POST", url=get_API_url(base_url="invoices/reporting/single"), headers=headers, data=payload)
                       
@@ -436,7 +590,9 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                                 msg = msg + "Status Code: " + str(response.status_code) + "<br><br> "
                                 msg = msg + "Zatca Response: " + response.text + "<br><br> "
                                 frappe.msgprint(msg)
-                                settings.pih = hash_value
+                                pih_data = json.loads(settings.get("pih", "{}"))
+                                updated_pih_data = update_json_data_pih(pih_data, company_name, hash_value)
+                                settings.set("pih", json.dumps(updated_pih_data))
                                 settings.save(ignore_permissions=True)
                                 
                                 invoice_doc = frappe.get_doc('Sales Invoice' , invoice_number )
@@ -459,21 +615,27 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                     try:
                         # frappe.msgprint("Clearance API")
                         settings = frappe.get_doc('Zatca setting')
+                        company_name = settings.company.replace(" ", "-")
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
                         "invoice": xml_base64_Decode(signed_xmlfile_name), })
-                        headers = {
-                        'accept': 'application/json',
-                        'accept-language': 'en',
-                        'Clearance-Status': '1',
-                        'Accept-Version': 'V2',
-                        'Authorization': 'Basic' + settings.basic_auth_production,
-                        # 'Authorization': 'Basic' + settings.basic_auth,
-                        
-                        'Content-Type': 'application/json',
-                        'Cookie': 'TS0106293e=0132a679c03c628e6c49de86c0f6bb76390abb4416868d6368d6d7c05da619c8326266f5bc262b7c0c65a6863cd3b19081d64eee99' }
-                        
+                        basic_auth_production = settings.get("basic_auth_production", "{}")
+                        basic_auth_production_data = json.loads(basic_auth_production)
+                        production_csid = get_production_csid_for_company(basic_auth_production_data, company_name)
+
+                        if production_csid:
+                            headers = {
+                            'accept': 'application/json',
+                            'accept-language': 'en',
+                            'Clearance-Status': '1',
+                            'Accept-Version': 'V2',
+                            'Authorization': 'Basic' + production_csid,
+                            # 'Authorization': 'Basic' + settings.basic_auth,
+                            'Content-Type': 'application/json',
+                            'Cookie': 'TS0106293e=0132a679c03c628e6c49de86c0f6bb76390abb4416868d6368d6d7c05da619c8326266f5bc262b7c0c65a6863cd3b19081d64eee99' }
+                        else:
+                            frappe.throw("Production CSID for company {} not found".format(company_name))
                         response = requests.request("POST", url=get_API_url(base_url="invoices/clearance/single"), headers=headers, data=payload)
                         
                         # response.status_code = 400
@@ -516,7 +678,9 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                                 msg = msg + "Status Code: " + str(response.status_code) + "<br><br> "
                                 msg = msg + "Zatca Response: " + response.text + "<br><br> "
                                 frappe.msgprint(msg)
-                                settings.pih = hash_value
+                                pih_data = json.loads(settings.get("pih", "{}"))
+                                updated_pih_data = update_json_data_pih(pih_data, company_name, hash_value)
+                                settings.set("pih", json.dumps(updated_pih_data))
                                 settings.save(ignore_permissions=True)
                                 
                                 invoice_doc = frappe.get_doc('Sales Invoice' , invoice_number )

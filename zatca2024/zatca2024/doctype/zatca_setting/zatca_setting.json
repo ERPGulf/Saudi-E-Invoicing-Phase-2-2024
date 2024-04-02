@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "company",
   "detailsotp_tab",
   "zatca_invoice_enabled",
   "background",
@@ -89,7 +90,7 @@
   },
   {
    "fieldname": "pih",
-   "fieldtype": "Data",
+   "fieldtype": "Long Text",
    "label": "PIH"
   },
   {
@@ -140,7 +141,7 @@
   },
   {
    "fieldname": "compliance_request_id",
-   "fieldtype": "Data",
+   "fieldtype": "Long Text",
    "label": "compliance request id "
   },
   {
@@ -191,12 +192,18 @@
    "fieldname": "check_compliance",
    "fieldtype": "Button",
    "label": "Check Compliance"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-12-27 08:45:09.248903",
+ "modified": "2024-04-01 00:29:16.127841",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "Zatca setting",
