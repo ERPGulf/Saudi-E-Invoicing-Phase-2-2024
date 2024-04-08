@@ -412,16 +412,16 @@ def production_CSID():
                     company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     basic_auth = settings.get("basic_auth", "{}")
                     frappe.msgprint(basic_auth)
-                    frappe.msgprint("A2")
                     basic_auth_data = json.loads(basic_auth)
                     csid = get_csid_for_company(basic_auth_data, company_name)
                     compliance_request_id = settings.get("compliance_request_id", "{}")
                     compliance_request_id_data = json.loads(compliance_request_id)
                     request_id = get_request_id_for_company(compliance_request_id_data, company_name)
+                    frappe.msgprint("A3.1")
                     payload = json.dumps({
                             "compliance_request_id": request_id
                         })
-                   
+                    frappe.msgprint("A3.2")
                     headers = {
                     'accept': 'application/json',
                     'Accept-Version': 'V2',
@@ -444,6 +444,7 @@ def production_CSID():
                         basic_auth_production_data = {"companies": []}
                     except:
                         basic_auth_production_data = {"companies": []}
+                    frappe.msgprint("A3.2")
 
                     updated_data = update_json_data_production_csid(basic_auth_production_data, company_name, encoded_value)
                     settings.set("basic_auth_production", json.dumps(updated_data))
