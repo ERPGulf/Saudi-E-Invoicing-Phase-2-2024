@@ -401,7 +401,7 @@ def get_request_id_for_company(compliance_request_id_data, company_name):
                     for entry in compliance_request_id_data.get("data", []):
                         if entry.get("company") == company_name:
                             return entry.get("request_id")
-                    return None
+                    frappe.throw("Error while retrieving  request id of company for production:  " + str(e) )
                 except Exception as e:
                         frappe.throw("Error in getting request id of company for production:  " + str(e) )
 
