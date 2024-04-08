@@ -433,6 +433,7 @@ def production_CSID():
                     frappe.msgprint("AA.A")
                     if response.status_code != 200:
                         frappe.throw("Error in production: " + str(response.text))
+                    frappe.msgprint(response.text)
                     data=json.loads(response.text)
                     frappe.msgprint("AA.B")
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
