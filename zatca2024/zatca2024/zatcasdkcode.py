@@ -518,13 +518,13 @@ def update_json_data_pih(existing_data, company_name, pih):
                         for entry in existing_data["data"]:
                             if entry["company"] == company_name:
                                 # Update the PIH for the existing company
-                                entry["PIH"] = pih
+                                entry["pih"] = pih
                                 company_exists = True
                                 break
                         if not company_exists:
                             existing_data["data"].append({
                                 "company": company_name,
-                                "PIH": pih
+                                "pih": pih
                             })
                         return existing_data
                     except Exception as e:
