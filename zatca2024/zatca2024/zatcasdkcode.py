@@ -447,9 +447,11 @@ def production_CSID():
                     frappe.msgprint("A3.2")
 
                     updated_data = update_json_data_production_csid(basic_auth_production_data, company_name, encoded_value)
+                    frappe.msgprint("A3.3")
                     settings.set("basic_auth_production", json.dumps(updated_data))
+                    frappe.msgprint("A3.2")
                     settings.save(ignore_permissions=True)
-
+                    frappe.msgprint("A3.2")
                 except Exception as e:
                     frappe.throw("error in  production csid formation:  " + str(e) )
 
