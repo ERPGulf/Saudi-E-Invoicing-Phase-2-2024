@@ -411,6 +411,8 @@ def production_CSID():
                     settings = frappe.get_doc('Zatca setting')
                     company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     basic_auth = settings.get("basic_auth", "{}")
+                    frappe.msgprint(basic_auth)
+                    frappe.msgprint("A2")
                     basic_auth_data = json.loads(basic_auth)
                     csid = get_csid_for_company(basic_auth_data, company_name)
                     compliance_request_id = settings.get("compliance_request_id", "{}")
