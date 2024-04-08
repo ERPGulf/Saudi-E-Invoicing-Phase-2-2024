@@ -82,7 +82,7 @@ def get_latest_generated_csr_file(folder_path='.'):
 def generate_csr():
                 try:
                     settings = frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-")
+                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     csr_config_file = f'{company_name}.properties'
                     private_key_file = f'{company_name}-privatekey.pem'
                     generated_csr_file = 'sdkcsr.pem'
@@ -108,7 +108,7 @@ def generate_csr():
                             "content": get_csr
                         })
                         file.save(ignore_permissions=True)
-                        frappe.msgprint("CSR generation successful. CSR saved")
+                        frappe.msgprint("CSR generation successful.CSR saved")
                     except Exception as e:
                         frappe.throw(err)
                         frappe.throw("An error occurred: " + str(e))
@@ -188,7 +188,7 @@ def create_CSID():
                 try:
                     # set_cert_path()
                     settings=frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-") 
+                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     with open(get_latest_generated_csr_file(), "r") as f:
                         csr_contents = f.read()
                     payload = json.dumps({
@@ -243,7 +243,7 @@ def create_CSID():
 def sign_invoice():
                 try:
                     settings=frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-")
+                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     xmlfile_name = 'finalzatcaxml.xml'
                     signed_xmlfile_name = 'sdsign.xml'
                     SDK_ROOT= settings.sdk_root
@@ -362,7 +362,7 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
                         "invoice": xml_base64_Decode(signed_xmlfile_name) })
-                    company_name = settings.company.replace(" ", "-")
+                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     basic_auth = settings.get("basic_auth", "{}")
                     basic_auth_data = json.loads(basic_auth)
                     csid = get_csid_for_company(basic_auth_data, company_name)
@@ -405,7 +405,7 @@ def get_request_id_for_company(compliance_request_id_data, company_name):
 def production_CSID():    
                 try:
                     settings = frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-")
+                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                     basic_auth = settings.get("basic_auth", "{}")
                     basic_auth_data = json.loads(basic_auth)
                     csid = get_csid_for_company(basic_auth_data, company_name)
@@ -523,7 +523,7 @@ def update_json_data_pih(existing_data, company_name, pih):
 def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invoice_doc):
                     try:
                         settings = frappe.get_doc('Zatca setting')
-                        company_name = settings.company.replace(" ", "-")
+                        company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
@@ -612,7 +612,7 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                     try:
                         # frappe.msgprint("Clearance API")
                         settings = frappe.get_doc('Zatca setting')
-                        company_name = settings.company.replace(" ", "-")
+                        company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
