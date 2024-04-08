@@ -437,9 +437,9 @@ def production_CSID():
                     'Content-Type': 'application/json' }
                     response = requests.request("POST", url=get_API_url(base_url="production/csids"), headers=headers, data=payload)
                     frappe.msgprint("AA.A")
+                    frappe.msgprint(response.text)
                     if response.status_code != 200:
                         frappe.throw("Error in production: " + str(response.text))
-                    frappe.msgprint(response.text)
                     data=json.loads(response.text)
                     frappe.msgprint("AA.B")
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
