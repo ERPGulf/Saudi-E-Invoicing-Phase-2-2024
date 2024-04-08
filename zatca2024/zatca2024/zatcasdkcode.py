@@ -215,7 +215,6 @@ def create_CSID():
                     # compliance_cert =get_auth_headers(data["binarySecurityToken"],data["secret"])
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
                     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
-                    frappe.msgprint("Test.1")
                     with open(f"{company_name}.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
                     basic_auth = settings.get("basic_auth", "{}")
