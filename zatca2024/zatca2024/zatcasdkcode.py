@@ -425,7 +425,7 @@ def production_CSID():
                     frappe.msgprint("XX.4")
                     frappe.msgprint(request_id)
                     payload = json.dumps({
-                            "compliance_request_id": request_id
+                            "compliance_request_id": "1712610731284" # request_id
                         })
                     frappe.msgprint("A3.2")
                     headers = {
