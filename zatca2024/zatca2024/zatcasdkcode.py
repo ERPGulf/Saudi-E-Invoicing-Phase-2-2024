@@ -220,6 +220,7 @@ def create_CSID():
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
                     basic_auth = settings.get("basic_auth", "{}")
                     frappe.msgprint("Test.1.2")
+                    frappe.msgprint(basic_auth)
                     try:
                         basic_auth_data = json.loads(basic_auth)
                     except json.JSONDecodeError:
