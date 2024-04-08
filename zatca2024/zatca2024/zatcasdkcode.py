@@ -444,7 +444,7 @@ def production_CSID():
                         basic_auth_production_data = {"companies": []}
                     except:
                         basic_auth_production_data = {"companies": []}
-                    frappe.msgprint("A3.2")
+                    frappe.msgprint(basic_auth_production_data)
 
                     updated_data = update_json_data_production_csid(basic_auth_production_data, company_name, encoded_value)
                     frappe.msgprint("A3.3")
