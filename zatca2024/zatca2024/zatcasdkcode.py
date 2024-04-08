@@ -226,6 +226,8 @@ def create_CSID():
                         basic_auth_data = json.loads(basic_auth)
                     except json.JSONDecodeError:
                         basic_auth_data = {"data": []}
+                    except:
+                        basic_auth_data = {"data": []}
                     frappe.msgprint("Test.1.3")
                     updated_basic_auth_data = update_json_data_csid(basic_auth_data, company_name, encoded_value)
                     frappe.msgprint("Test.2")
