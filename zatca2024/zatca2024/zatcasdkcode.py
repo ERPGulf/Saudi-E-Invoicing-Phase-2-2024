@@ -209,8 +209,8 @@ def create_CSID():
                     if response.status_code != 200:
                         frappe.throw("Error: " + "Error in Certificate or OTP: " + "<br> <br>" + response.text)
                     
-                    # frappe.msgprint(str(response.content))
-                    frappe.msgprint("Successfully created CSR.")
+                    frappe.msgprint(str(response.content))
+                    # frappe.msgprint("Test.")
                     data=json.loads(response.text)
                     # compliance_cert =get_auth_headers(data["binarySecurityToken"],data["secret"])
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
