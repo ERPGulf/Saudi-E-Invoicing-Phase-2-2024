@@ -397,10 +397,11 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                     frappe.throw("ERROR in clearance invoice ,zatca validation:  " + str(e) )
 
 def get_request_id_for_company(compliance_request_id_data, company_name):
-                frappe.msgprint("inside")
+                
                 try:
                     for entry in compliance_request_id_data.get("data", []):
                         if entry.get("company") == company_name:
+                            frappe.msgprint("inside11")
                             return entry.get("request_id")
                     frappe.throw("Error while retrieving  request id of company for production:  " + str(e) )
                 except Exception as e:
