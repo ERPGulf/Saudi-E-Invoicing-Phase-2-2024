@@ -422,7 +422,7 @@ def production_CSID():
                     request_id = get_request_id_for_company(compliance_request_id_data, company_name)
                     frappe.msgprint(request_id)
                     payload = json.dumps({
-                            "compliance_request_id": "1712610731284" # request_id
+                            "compliance_request_id": request_id
                         })
                     headers = {
                     'accept': 'application/json',
