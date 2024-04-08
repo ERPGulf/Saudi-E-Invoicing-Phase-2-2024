@@ -418,16 +418,12 @@ def production_CSID():
                     frappe.msgprint(csid)
                     compliance_request_id = settings.get("compliance_request_id", "{}")
                     frappe.msgprint(compliance_request_id)
-                    frappe.msgprint("XX.2")
                     compliance_request_id_data = json.loads(compliance_request_id)
-                    frappe.msgprint("XX.3")
                     request_id = get_request_id_for_company(compliance_request_id_data, company_name)
-                    frappe.msgprint("XX.4")
                     frappe.msgprint(request_id)
                     payload = json.dumps({
                             "compliance_request_id": "1712610731284" # request_id
                         })
-                    frappe.msgprint("A3.2")
                     headers = {
                     'accept': 'application/json',
                     'Accept-Version': 'V2',
@@ -436,34 +432,26 @@ def production_CSID():
                     # 'Authorization': 'Basic'+ "VFVsSlExSjZRME5CWlhsblFYZEpRa0ZuU1VkQldYbFpXak01U2sxQmIwZERRM0ZIVTAwME9VSkJUVU5OUWxWNFJYcEJVa0puVGxaQ1FVMU5RMjFXU21KdVduWmhWMDV3WW0xamQwaG9ZMDVOYWsxNFRXcEplazFxUVhwUFZFbDZWMmhqVGsxcVozaE5ha2w1VFdwRmQwMUVRWGRYYWtJMVRWRnpkME5SV1VSV1VWRkhSWGRLVkZGVVJWbE5RbGxIUVRGVlJVTjNkMUJOZWtGM1QxUmpkMDlFUVRKTlZFRjNUVVJCZWsxVFozZEtaMWxFVmxGUlMwUkNPVUpsUjJ4NlNVVnNkV016UW14Wk0xSndZakkwWjFFeU9YVmtTRXBvV1ROU2NHSnRZMmRUYkU1RVRWTlpkMHBCV1VSV1VWRkVSRUl4VlZVeFVYUlBSR2N5VGtSTmVFMVVVVEZNVkUxM1RVUnJNMDFFWjNkT2FrVjNUVVJCZDAxNlFsZE5Ra0ZIUW5seFIxTk5ORGxCWjBWSFFsTjFRa0pCUVV0Qk1FbEJRa3hSYUhCWU1FSkVkRUZST1VKNk9HZ3dNbk53VkZGSlVVTjJOV2c0VFhGNGFEUnBTRTF3UW04dlFtOXBWRmRrYlN0U1dXWktiVXBPZGpkWWRuVTVNMlp2V1c0ME5UaE9SMUpuYm5nMk5HWldhbTlWTDFCMWFtZGpXWGRuWTAxM1JFRlpSRlpTTUZSQlVVZ3ZRa0ZKZDBGRVEwSnpaMWxFVmxJd1VrSkpSM0ZOU1VkdWNFbEhhMDFKUjJoTlZITjNUMUZaUkZaUlVVVkVSRWw0VEZaU1ZGWklkM2xNVmxKVVZraDNla3hYVm10TmFrcHRUVmRSTkV4WFZUSlpWRWwwVFZSRmVFOURNRFZaYWxVMFRGZFJOVmxVYUcxTlZFWnNUa1JSTVZwcVJXWk5RakJIUTJkdFUwcHZiVlE0YVhoclFWRkZUVVI2VFhkTlJHc3pUVVJuZDA1cVJYZE5SRUYzVFhwRlRrMUJjMGRCTVZWRlJFRjNSVTFVUlhoTlZFVlNUVUU0UjBFeFZVVkhaM2RKVld4S1UxSkVTVFZOYW10NFNIcEJaRUpuVGxaQ1FUaE5SbXhLYkZsWGQyZGFXRTR3V1ZoU2JFbEhSbXBrUjJ3eVlWaFNjRnBZVFhkRFoxbEpTMjlhU1hwcU1FVkJkMGxFVTFGQmQxSm5TV2hCVFhGU1NrRXJVRE5JVEZsaVQwMDROVWhLTDNkT2VtRldOMWRqWm5JdldqTjFjVGxLTTBWVGNsWlpla0ZwUlVGdk5taGpPVFJTU0dwbWQzTndZUzl3V0ZadVZpOXZVV0ZOT1ROaU5sSTJiV2RhV0RCMVFWTXlNVVpuUFE9PTp5dFpseXpiSVdjTCtQeURPK0V3UmpYdEdISnhIcHdxd0lhRWxobExBUllBPQ==",
                     'Content-Type': 'application/json' }
                     response = requests.request("POST", url=get_API_url(base_url="production/csids"), headers=headers, data=payload)
-                    frappe.msgprint("AA.A")
                     frappe.msgprint(response.text)
                     if response.status_code != 200:
                         frappe.throw("Error in production: " + str(response.text))
                     data=json.loads(response.text)
-                    frappe.msgprint("AA.B")
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
                     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
-                    frappe.msgprint("AA.C")
                     with open(f"{company_name}.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
                     basic_auth_production = settings.get("basic_auth_production", "{}")
-                    frappe.msgprint("AA.D")
                     try:
                         basic_auth_production_data = json.loads(basic_auth_production)
                     except json.JSONDecodeError:
                         basic_auth_production_data = {"companies": []}
                     except:
                         basic_auth_production_data = {"companies": []}
-                    frappe.msgprint("AA.E")
                     frappe.msgprint(basic_auth_production_data)
 
                     updated_data = update_json_data_production_csid(basic_auth_production_data, company_name, encoded_value)
-                    frappe.msgprint("A3.3")
                     settings.set("basic_auth_production", json.dumps(updated_data))
-                    frappe.msgprint("A4.1")
                     settings.save(ignore_permissions=True)
-                    frappe.msgprint("A4.2")
                 except Exception as e:
                     frappe.throw("error in  production csid formation:  " + str(e) )
 
