@@ -263,6 +263,16 @@ def doc_Reference_compliance(invoice,sales_invoice_doc,invoice_number, complianc
             except Exception as e:
                     frappe.throw("Error occured in  reference doc" + str(e) )
 
+def get_pih_for_company(pih_data, company_name):
+                
+                try:
+                    for entry in pih_data.get("data", []):
+                        if entry.get("company") == company_name:
+                            return str(entry.get("pih"))
+                    frappe.throw("Error while retrieving  PIH of company for production:  " + str(e) )
+                except Exception as e:
+                        frappe.throw("Error in getting PIH of company for production:  " + str(e) )
+
 
 def additional_Reference(invoice):
             try:
@@ -273,7 +283,13 @@ def additional_Reference(invoice):
                 cac_Attachment = ET.SubElement(cac_AdditionalDocumentReference2, "cac:Attachment")
                 cbc_EmbeddedDocumentBinaryObject = ET.SubElement(cac_Attachment, "cbc:EmbeddedDocumentBinaryObject")
                 cbc_EmbeddedDocumentBinaryObject.set("mimeCode", "text/plain")
-                cbc_EmbeddedDocumentBinaryObject.text = settings.pih
+                
+                settings = frappe.get_doc('Zatca setting')
+                company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                pih_data = settings.get("pih", "{}")
+                pih = get_pih_for_company(pih_data, company_name)
+                
+                cbc_EmbeddedDocumentBinaryObject.text = pih
                 # cbc_EmbeddedDocumentBinaryObject.text = "L0Awl814W4ycuFvjDVL/vIW08mNRNAwqfdlF5i/3dpU="
             # QR CODE ------------------------------------------------------------------------------------------------------------------------------------------------------------------
                 cac_AdditionalDocumentReference22 = ET.SubElement(invoice, "cac:AdditionalDocumentReference")
