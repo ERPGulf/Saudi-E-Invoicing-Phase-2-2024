@@ -268,7 +268,7 @@ def get_pih_for_company(pih_data, company_name):
                 try:
                     for entry in pih_data.get("data", []):
                         if entry.get("company") == company_name:
-                            return str(entry.get("pih"))
+                            return entry.get("pih")
                     frappe.throw("Error while retrieving  PIH of company for production:  " + str(e) )
                 except Exception as e:
                         frappe.throw("Error in getting PIH of company for production:  " + str(e) )
