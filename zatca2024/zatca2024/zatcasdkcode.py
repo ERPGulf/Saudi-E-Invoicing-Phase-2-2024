@@ -440,6 +440,8 @@ def production_CSID():
                         basic_auth_production_data = json.loads(basic_auth_production)
                     except json.JSONDecodeError:
                         basic_auth_production_data = {"companies": []}
+                    except:
+                        basic_auth_production_data = {"companies": []}
 
                     updated_data = update_json_data_production_csid(basic_auth_production_data, company_name, encoded_value)
                     settings.set("basic_auth_production", json.dumps(updated_data))
