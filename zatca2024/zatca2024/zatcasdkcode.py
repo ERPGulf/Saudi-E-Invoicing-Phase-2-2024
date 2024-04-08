@@ -232,13 +232,17 @@ def create_CSID():
                     updated_basic_auth_data = update_json_data_csid(basic_auth_data, company_name, encoded_value)
                     frappe.msgprint("Test.2")
                     settings.set("basic_auth", json.dumps(updated_basic_auth_data))
+                    frappe.msgprint("Test.2.A")
                     compliance_request_id = settings.get("compliance_request_id", "{}")
+                    frappe.msgprint("Test.2.B")
                     try:
                         compliance_request_id_data = json.loads(compliance_request_id)
                         # Ensure that compliance_request_id_data is a dictionary with a "data" key.
                         if not isinstance(compliance_request_id_data, dict) or "data" not in compliance_request_id_data:
                             raise ValueError("Invalid format for compliance_request_id_data")
                     except (json.JSONDecodeError, ValueError):
+                        compliance_request_id_data = {"data": []}
+                    except:
                         compliance_request_id_data = {"data": []}
 
                     updated_compliance_request_id_data = update_json_data_request_id(compliance_request_id_data, company_name, data["requestID"])
