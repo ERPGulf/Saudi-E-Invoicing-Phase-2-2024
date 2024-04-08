@@ -418,7 +418,7 @@ def production_CSID():
                     compliance_request_id = settings.get("compliance_request_id", "{}")
                     compliance_request_id_data = json.loads(compliance_request_id)
                     request_id = get_request_id_for_company(compliance_request_id_data, company_name)
-                    frappe.msgprint("A3.1")
+                    frappe.msgprint(request_id)
                     payload = json.dumps({
                             "compliance_request_id": request_id
                         })
