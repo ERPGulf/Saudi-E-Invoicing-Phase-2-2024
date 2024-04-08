@@ -414,6 +414,7 @@ def production_CSID():
                     frappe.msgprint(basic_auth)
                     basic_auth_data = json.loads(basic_auth)
                     csid = get_csid_for_company(basic_auth_data, company_name)
+                    frappe.msgprint(csid)
                     compliance_request_id = settings.get("compliance_request_id", "{}")
                     compliance_request_id_data = json.loads(compliance_request_id)
                     request_id = get_request_id_for_company(compliance_request_id_data, company_name)
