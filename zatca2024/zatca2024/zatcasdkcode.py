@@ -219,10 +219,12 @@ def create_CSID():
                     with open(f"{company_name}.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
                     basic_auth = settings.get("basic_auth", "{}")
+                    frappe.msgprint("Test.1.2")
                     try:
                         basic_auth_data = json.loads(basic_auth)
                     except json.JSONDecodeError:
                         basic_auth_data = {"data": []}
+                    frappe.msgprint("Test.1.3")
                     updated_basic_auth_data = update_json_data_csid(basic_auth_data, company_name, encoded_value)
                     frappe.msgprint("Test.2")
                     settings.set("basic_auth", json.dumps(updated_basic_auth_data))
