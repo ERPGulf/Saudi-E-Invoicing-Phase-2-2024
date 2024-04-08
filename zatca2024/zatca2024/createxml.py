@@ -286,7 +286,8 @@ def additional_Reference(invoice):
                 
                 settings = frappe.get_doc('Zatca setting')
                 company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
-                pih_data = settings.get("pih", "{}")
+                pih_data_raw = settings.get("pih", "{}")
+                pih_data = json.loads(pih_data_raw)
                 pih = get_pih_for_company(pih_data, company_name)
                 
                 cbc_EmbeddedDocumentBinaryObject.text = pih
