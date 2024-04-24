@@ -598,7 +598,6 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                                 msg = msg + "Status Code: " + str(response.status_code) + "<br><br> "
                                 msg = msg + "Zatca Response: " + response.text + "<br><br> "
                                 frappe.msgprint(msg)
-                    
                                 pih_data = json.loads(settings.get("pih", "{}"))
                                 updated_pih_data = update_json_data_pih(pih_data, company_name, hash_value)
                                 settings.set("pih", json.dumps(updated_pih_data))
@@ -687,7 +686,6 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                                 msg = msg + "Status Code: " + str(response.status_code) + "<br><br> "
                                 msg = msg + "Zatca Response: " + response.text + "<br><br> "
                                 frappe.msgprint(msg)
-                            
                                 pih_data = json.loads(settings.get("pih", "{}"))
                                 updated_pih_data = update_json_data_pih(pih_data, company_name, hash_value)
                                 settings.set("pih", json.dumps(updated_pih_data))
