@@ -269,6 +269,7 @@ def get_pih_for_company(pih_data, company_name):
                     for entry in pih_data.get("data", []):
                         if entry.get("company") == company_name:
                             return entry.get("pih")
+                    # raise Exception(f"PIH for company {company_name} not found")
                     frappe.throw("Error while retrieving  PIH of company for production:  " + str(e) )
                 except Exception as e:
                         frappe.throw("Error in getting PIH of company for production:  " + str(e) )
@@ -277,6 +278,17 @@ def get_pih_for_company(pih_data, company_name):
 def additional_Reference(invoice):
             try:
                 settings=frappe.get_doc('Zatca setting')
+                company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+
+                pih_data_raw = settings.get("pih", "{}")
+                try:
+                    pih_data = json.loads(pih_data_raw)
+                except json.JSONDecodeError:
+                    frappe.throw("JSON decode error in PIH data")
+
+                pih = get_pih_for_company(pih_data, company_name)
+                if pih is None:
+                    frappe.throw("No PIH found for the company")
                 cac_AdditionalDocumentReference2 = ET.SubElement(invoice, "cac:AdditionalDocumentReference")
                 cbc_ID_1_1 = ET.SubElement(cac_AdditionalDocumentReference2, "cbc:ID")
                 cbc_ID_1_1.text = "PIH"
@@ -284,12 +296,7 @@ def additional_Reference(invoice):
                 cbc_EmbeddedDocumentBinaryObject = ET.SubElement(cac_Attachment, "cbc:EmbeddedDocumentBinaryObject")
                 cbc_EmbeddedDocumentBinaryObject.set("mimeCode", "text/plain")
                 
-                settings = frappe.get_doc('Zatca setting')
-                company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
-                pih_data_raw = settings.get("pih", "{}")
-                pih_data = json.loads(pih_data_raw)
-                pih = get_pih_for_company(pih_data, company_name)
-                
+                # settings = frappe.get_doc('Zatca setting')
                 cbc_EmbeddedDocumentBinaryObject.text = pih
                 # cbc_EmbeddedDocumentBinaryObject.text = "L0Awl814W4ycuFvjDVL/vIW08mNRNAwqfdlF5i/3dpU="
             # QR CODE ------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -416,6 +423,7 @@ def delivery_And_PaymentMeans(invoice,sales_invoice_doc, is_return):
                 return invoice
             except Exception as e:
                     frappe.throw("Delivery and payment means failed"+ str(e) )
+                    
 def delivery_And_PaymentMeans_for_Compliance(invoice,sales_invoice_doc, compliance_type):
             try:
                 cac_Delivery = ET.SubElement(invoice, "cac:Delivery")
@@ -487,7 +495,8 @@ def tax_Data(invoice,sales_invoice_doc):
                 cbc_ID_8.text =  "S"
                 cbc_Percent_1 = ET.SubElement(cac_TaxCategory_1, "cbc:Percent")
                 # cbc_Percent_1.text = str(sales_invoice_doc.taxes[0].rate)
-                cbc_Percent_1.text = f"{float(sales_invoice_doc.taxes[0].rate):.2f}"                
+                cbc_Percent_1.text = f"{float(sales_invoice_doc.taxes[0].rate):.2f}"
+
                 cac_TaxScheme_3 = ET.SubElement(cac_TaxCategory_1, "cac:TaxScheme")
                 cbc_ID_9 = ET.SubElement(cac_TaxScheme_3, "cbc:ID")
                 cbc_ID_9.text = "VAT"
