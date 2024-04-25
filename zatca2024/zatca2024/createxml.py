@@ -275,6 +275,7 @@ def get_pih_for_company(pih_data, company_name):
 
 
 def additional_Reference(invoice):
+            
             try:
                 settings=frappe.get_doc('Zatca setting')
                 cac_AdditionalDocumentReference2 = ET.SubElement(invoice, "cac:AdditionalDocumentReference")
@@ -570,6 +571,8 @@ def item_data(invoice,sales_invoice_doc):
 
 def xml_structuring(invoice,sales_invoice_doc):
             try:
+
+                zatca_setting = frappe.get_doc("Zatca setting")
                 xml_declaration = "<?xml version='1.0' encoding='UTF-8'?>\n"
                 tree = ET.ElementTree(invoice)
                 with open(f"xml_files.xml", 'wb') as file:
@@ -578,9 +581,11 @@ def xml_structuring(invoice,sales_invoice_doc):
                     xml_string = file.read()
                 xml_dom = minidom.parseString(xml_string)
                 pretty_xml_string = xml_dom.toprettyxml(indent="  ")   # created xml into formatted xml form 
-                with open(f"finalzatcaxml.xml", 'w') as file:
+                
+                file_path = os.path.join(str(zatca_setting.sdk_root), f"finalzatcaxml.xml")
+                with open(file_path, 'w') as file:
                     file.write(pretty_xml_string)
-                          # Attach the getting xml for each invoice
+                # Attach the getting xml for each invoice
                 try:
                     if frappe.db.exists("File",{ "attached_to_name": sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype }):
                         frappe.db.delete("File",{ "attached_to_name":sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype })

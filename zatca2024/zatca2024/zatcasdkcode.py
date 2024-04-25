@@ -72,7 +72,7 @@ def get_latest_generated_csr_file(folder_path='.'):
                 if not files:
                     return None
                 latest_file = max(files, key=os.path.getmtime)
-                print(latest_file)
+                # print(latest_file)
                 return os.path.join(folder_path, latest_file)
             except Exception as e:
                     frappe.throw(" error in get_latest_generated_csr_file: "+ str(e) )
@@ -83,11 +83,11 @@ def generate_csr():
                 try:
                     settings = frappe.get_doc('Zatca setting')
                     company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
-                    csr_config_file = f'{company_name}.properties'
-                    private_key_file = f'{company_name}-privatekey.pem'
-                    generated_csr_file = 'sdkcsr.pem'
+                    csr_config_file = f'$SDK_ROOT/{company_name}.properties'
+                    private_key_file = f'$SDK_ROOT/{company_name}-privatekey.pem'
+                    generated_csr_file = '$SDK_ROOT/sdkcsr.pem'
                     SDK_ROOT = settings.sdk_root
-                    sdk_config_file = f'{company_name}.json'
+                    sdk_config_file = f'$SDK_ROOT/{company_name}.json'
 
                     path_string = f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config_file} && export PATH=$PATH:$FATOORA_HOME &&  "
                     if settings.select == "Simulation":
@@ -248,10 +248,10 @@ def sign_invoice():
                 try:
                     settings=frappe.get_doc('Zatca setting')
                     company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
-                    xmlfile_name = 'finalzatcaxml.xml'
+                    xmlfile_name = '$SDK_ROOT/finalzatcaxml.xml'
                     signed_xmlfile_name = 'sdsign.xml'
                     SDK_ROOT= settings.sdk_root
-                    sdk_config_file = f'{company_name}.json'
+                    sdk_config_file = f'$SDK_ROOT/{company_name}.json'
                     path_string = f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config_file} && export PATH=$PATH:$FATOORA_HOME &&  "
                     
                     command_sign_invoice = path_string  + f'fatoora -sign -invoice {xmlfile_name} -signedInvoice {signed_xmlfile_name}'
@@ -360,6 +360,7 @@ def get_csid_for_company(basic_auth_data, company_name):
 
 def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                 # frappe.throw("inside compliance api call")
+                print("inside compliance api call")
                 try:
                     settings = frappe.get_doc('Zatca setting')
                     payload = json.dumps({
@@ -381,9 +382,11 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                         }
                     else:
                         frappe.throw("CSID for company {} not found".format(company_name))
+                    print(get_API_url(base_url="compliance/invoices"), payload, "Values check \n\n\n")
                     try:
                         # frappe.throw("inside compliance api call2")
                         response = requests.request("POST", url=get_API_url(base_url="compliance/invoices"), headers=headers, data=payload)
+                        
                         frappe.msgprint(response.text)
                         # return response.text
 
@@ -629,6 +632,7 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                         "uuid": uuid1,
                         "invoice": xml_base64_Decode(signed_xmlfile_name), })
                         basic_auth_production = settings.get("basic_auth_production", "{}")
+                        # print(basic_auth_production, "basic_auth_production")
                         basic_auth_production_data = json.loads(basic_auth_production)
                         production_csid = get_production_csid_for_company(basic_auth_production_data, company_name)
 
@@ -831,6 +835,7 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
                     
                     # frappe.throw("Compliance Type: " + compliance_type )
                     try:    
+                            
                             # create_compliance_x509()
                             # frappe.throw("Created compliance x509 certificate")
                             
@@ -854,14 +859,15 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
                             invoice=tax_Data(invoice,sales_invoice_doc)
                             invoice=item_data(invoice,sales_invoice_doc)
                             pretty_xml_string=xml_structuring(invoice,sales_invoice_doc)
+
                             signed_xmlfile_name,path_string=sign_invoice()
+                            # frappe.msgprint("Compliance test")
                             qr_code_value=generate_qr_code(signed_xmlfile_name,sales_invoice_doc,path_string)
                             hash_value =generate_hash(signed_xmlfile_name,path_string)
                             # validate_invoice(signed_xmlfile_name,path_string)
                             # frappe.msgprint("validated and stopped it here")
                             # result,clearance_status=send_invoice_for_clearance_normal(uuid1,signed_xmlfile_name,hash_value)
                             
-                                # frappe.msgprint("Compliance test")
                             compliance_api_call(uuid1, hash_value, signed_xmlfile_name)
                     except:       
                             frappe.log_error(title='Zatca invoice call failed', message=frappe.get_traceback())
