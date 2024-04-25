@@ -46,42 +46,42 @@
    "default": "0",
    "fieldname": "zatca_invoice_enabled",
    "fieldtype": "Check",
-   "label": "zatca_invoice_enabled"
+   "label": "Zatca invoice enabled"
   },
   {
    "fieldname": "send_invoice_to_zatca",
    "fieldtype": "Select",
-   "label": "send invoice to zatca",
+   "label": "Send invoice to zatca",
    "options": "Live\nBatches"
   },
   {
    "fieldname": "create_csr",
    "fieldtype": "Button",
-   "label": "create CSR"
+   "label": "Create CSR"
   },
   {
    "default": "0",
    "fieldname": "attach_xml_with_invoice",
    "fieldtype": "Check",
-   "label": "attach xml with invoice"
+   "label": "Attach XML with invoice"
   },
   {
    "default": "0",
    "fieldname": "attach_xml_with_qr_code",
    "fieldtype": "Check",
-   "label": "attach xml with QR code"
+   "label": "Attach XML with QR code"
   },
   {
    "default": "0",
    "fieldname": "attach_qr_code_doctype",
    "fieldtype": "Check",
-   "label": "attach QR code doctype"
+   "label": "Attach QR code doctype"
   },
   {
    "default": "0",
    "fieldname": "attach_e_invoice_send_status_with_invoice",
    "fieldtype": "Check",
-   "label": "attach e_invoice send status with invoice"
+   "label": "Attach e_invoice send status with invoice"
   },
   {
    "fieldname": "otp",
@@ -107,17 +107,17 @@
   {
    "fieldname": "sandbox_url",
    "fieldtype": "Data",
-   "label": "Sandbox url"
+   "label": "Sandbox URL"
   },
   {
    "fieldname": "simulation_url",
    "fieldtype": "Data",
-   "label": "Simulation url"
+   "label": "Simulation URL"
   },
   {
    "fieldname": "production_url",
    "fieldtype": "Data",
-   "label": "Production url"
+   "label": "Production URL"
   },
   {
    "fieldname": "csid_and_tokens_tab",
@@ -142,7 +142,7 @@
   {
    "fieldname": "compliance_request_id",
    "fieldtype": "Long Text",
-   "label": "compliance request id "
+   "label": "Compliance request id "
   },
   {
    "fieldname": "basic_auth_production",
@@ -203,7 +203,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-09 01:22:02.578932",
+ "modified": "2024-04-17 14:20:47.989970",
  "modified_by": "Administrator",
  "module": "Zatca2024",
  "name": "Zatca setting",

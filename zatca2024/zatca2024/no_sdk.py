@@ -53,6 +53,9 @@ def getInvoiceHash(canonicalize_xml):
 with open("finalzatcaxml.xml", 'r') as file:
         file_content = file.read()
 print(type(file_content))
+xml = etree.fromstring(file_content.encode())
+canonical_xml = xml.getroottree().getroot().c14n()
+print(canonical_xml)
 sanitized_invoice = sign_invoice_no_sdk(etree.fromstring(file_content))
 # print(type(sanitized_invoice))
 print(getInvoiceHash(sanitized_invoice))
