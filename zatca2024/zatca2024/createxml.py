@@ -264,14 +264,12 @@ def doc_Reference_compliance(invoice,sales_invoice_doc,invoice_number, complianc
                     frappe.throw("Error occured in  reference doc" + str(e) )
 
 def get_pih_for_company(pih_data, company_name):
-                
-                try:
-                    for entry in pih_data.get("data", []):
-                        if entry.get("company") == company_name:
-                            return entry.get("pih")
-                    frappe.throw("Error while retrieving  PIH of company for production:  " + str(e) )
-                except Exception as e:
-                        frappe.throw("Error in getting PIH of company for production:  " + str(e) )
+    try:
+        for entry in pih_data.get("data", []):
+            if entry.get("company") == company_name:
+                return entry.get("pih")
+    except Exception as e:
+            frappe.throw("Error in getting PIH of company for production:  " + str(e) )
 
 
 def additional_Reference(invoice):
@@ -309,7 +307,7 @@ def additional_Reference(invoice):
                 cbc_method_sign.text = "urn:oasis:names:specification:ubl:dsig:enveloped:xades"
                 return invoice
             except Exception as e:
-                    frappe.throw("error occured in additional refrences" + str(e) )
+                frappe.throw("error occured in additional refrences" + str(e) )
 
 def company_Data(invoice,sales_invoice_doc):
             try:
