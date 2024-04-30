@@ -350,7 +350,7 @@ def company_Data(invoice,sales_invoice_doc):
                 cbc_ID_3.text = "VAT"
                 cac_PartyLegalEntity = ET.SubElement(cac_Party_1, "cac:PartyLegalEntity")
                 cbc_RegistrationName = ET.SubElement(cac_PartyLegalEntity, "cbc:RegistrationName")
-                cbc_RegistrationName.text = sales_invoice_doc.company
+                cbc_RegistrationName.text = company_doc.company_name_in_arabic
                 return invoice
             except Exception as e:
                     frappe.throw("error occured in company data"+ str(e) )
