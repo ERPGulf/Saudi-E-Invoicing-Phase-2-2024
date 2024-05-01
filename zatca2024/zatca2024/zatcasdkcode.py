@@ -80,6 +80,7 @@ def get_latest_generated_csr_file(folder_path='.'):
 
 @frappe.whitelist(allow_guest=True)
 def generate_csr():
+              
                 try:
                     settings = frappe.get_doc('Zatca setting')
                     company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
@@ -88,16 +89,16 @@ def generate_csr():
                     generated_csr_file = 'sdkcsr.pem'
                     SDK_ROOT = settings.sdk_root
                     sdk_config_file = f'{company_name}.json'
-
+                    
                     path_string = f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config_file} && export PATH=$PATH:$FATOORA_HOME &&  "
                     if settings.select == "Simulation":
                         command_generate_csr = path_string + f'fatoora -sim -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
+
                     else:
                         command_generate_csr = path_string + f'fatoora -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
-
                     try:
                         err, out = _execute_in_shell(command_generate_csr)
-                        print(out)
+    
                         with open(get_latest_generated_csr_file(), "r") as file_csr:
                             get_csr = file_csr.read()
                         file = frappe.get_doc({
@@ -913,7 +914,16 @@ def zatca_Background_on_submit(doc, method=None):
                         sales_invoice_doc = doc
                         invoice_number = sales_invoice_doc.name
                         settings = frappe.get_doc('Zatca setting')
-                        
+                        tax_rate = float(sales_invoice_doc.taxes[0].rate)
+
+                        if f"{tax_rate:.2f}" not in ['5.00', '15.00']:
+                            if sales_invoice_doc.custom_zatca_tax_category not in ["Zero Rated", "Exempted","Services outside scope of tax / Not subject to VAT"]:
+                                frappe.throw("Zatca tax category should be 'zero rated' or 'Exempted'or 'Services outside scope of tax / Not subject to VAT'.")
+
+                        if f"{tax_rate:.2f}" == '15.00':
+                            if sales_invoice_doc.custom_zatca_tax_category != "Standard":
+                                frappe.throw("Check the Zatca category code and enable it as standard.")
+
                         if settings.zatca_invoice_enabled != 1:
                             frappe.throw("Zatca Invoice is not enabled in Zatca Settings, Please contact your system administrator")
                         
