@@ -651,4 +651,7 @@ def xml_structuring(invoice,sales_invoice_doc):
                 except Exception as e:
                     frappe.throw(frappe.get_traceback())
             except Exception as e:
-                    frappe.throw("Error occured in XML structuring and attach. Please contact your system administrator"+ str(e) )
+                    frappe.throw(
+                        "Error occured in XML structuring and attach. Please contact your system administrator"
+                        + str(e)
+                    )
