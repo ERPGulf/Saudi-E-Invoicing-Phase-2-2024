@@ -589,7 +589,7 @@ def item_data(invoice,sales_invoice_doc):
                     cbc_RoundingAmount.text=str(abs(round(single_item.base_net_amount + (item_tax_percentage * single_item.base_net_amount / 100),2)))
                     cac_Item = ET.SubElement(cac_InvoiceLine, "cac:Item")
                     cbc_Name = ET.SubElement(cac_Item, "cbc:Name")
-                    cbc_Name.text = single_item.item_code
+                    cbc_Name.text = single_item.item_name
                     cac_ClassifiedTaxCategory = ET.SubElement(cac_Item, "cac:ClassifiedTaxCategory")
                     cbc_ID_11 = ET.SubElement(cac_ClassifiedTaxCategory, "cbc:ID")
                     if sales_invoice_doc.custom_zatca_tax_category == "Standard":
