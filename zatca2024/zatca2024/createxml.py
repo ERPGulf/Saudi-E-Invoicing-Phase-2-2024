@@ -288,7 +288,8 @@ def additional_Reference(invoice):
                 cbc_EmbeddedDocumentBinaryObject.set("mimeCode", "text/plain")
                 
                 settings = frappe.get_doc('Zatca setting')
-                company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                company = settings.company
+                company_name = frappe.db.get_value("Company", company, "abbr")
                 pih_data_raw = settings.get("pih", "{}")
                 pih_data = json.loads(pih_data_raw)
                 pih = get_pih_for_company(pih_data, company_name)
