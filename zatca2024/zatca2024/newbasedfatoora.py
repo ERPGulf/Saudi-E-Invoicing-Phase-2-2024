@@ -5,8 +5,6 @@ import lxml.etree as MyTree
 from datetime import datetime
 import xml.etree.ElementTree as ET
 import frappe
-from hashlib import sha256
-from base64 import b64encode
 import pyqrcode
 # frappe.init(site="prod.erpgulf.com")
 # frappe.connect()
@@ -23,6 +21,16 @@ from zatca2024.zatca2024.createxml import xml_tags,salesinvoice_data,invoice_Typ
 import json
 import requests
 from cryptography.hazmat.primitives import serialization
+import pytz
+from datetime import datetime, timezone
+
+def saudi_time():
+        timestamp = datetime.strptime(datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+        tz = pytz.timezone('Asia/Riyadh')
+        saudi_time = datetime.now(tz)
+        localized_timestamp = saudi_time.strftime('%Y-%m-%dT%H:%M:%S')
+        # print(localized_timestamp)
+        return  localized_timestamp
 
 def get_csr_data():
     # Read the properties file
@@ -77,7 +85,11 @@ def create_private_keys():
     # print(private_key_pem)
     return private_key_pem
 
-private_key_pem = create_private_keys()
+with open("Dossary-Two-Corporation-privatekey.pem", 'r') as file:
+               private_key_pem= file.read()
+pem_key = f"-----BEGIN EC PRIVATE KEY-----\n{private_key_pem}\n-----END EC PRIVATE KEY-----"
+with open('new_private.pem', 'w') as f:
+    f.write(pem_key) 
 
 def create_csr(portal_type):
     
@@ -130,46 +142,46 @@ csr_string = create_csr("sandbox")
 # print(privatekey)
 # with open('new_csr.csr', 'w') as file:
 #     file.write(csr_string)
-with open('new_private.pem', 'w') as file:
-    file.write(private_key_pem.decode('utf-8'))
+# with open('new_private.pem', 'w') as file:
+#     file.write(private_key_pem.decode('utf-8'))
 # print(csr_string)
 # # with open('new_public.pem', 'w') as file:
 # #     file.write(public_key_pem.decode('utf-8'))
 # with open('new_public.pem', 'wb') as f:
 #       f.write(public_key_pem)
 
-def create_csid():
-    url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance"
-    payload = json.dumps({
-    "csr": csr_string
-    })
-    headers = {
-    'accept': 'application/json',
-    'OTP': '123345',
-    'Accept-Version': 'V2',
-    'Content-Type': 'application/json',
-    'Cookie': 'TS0106293e=0132a679c07400f36242c054cc5c73a634f51486563baa5cc4d51293c0b38f68d10c82161b3074b1b2dfbe83a1ae5b78f2fd256699'
-    }
-    response = requests.request("POST", url, headers=headers, data=payload)
-    # print(response.text)
-    print("----------------------------------------------------------------------------------------------------------")
-    data=json.loads(response.text)
+# def create_csid():
+#     url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance"
+#     payload = json.dumps({
+#     "csr": csr_string
+#     })
+#     headers = {
+#     'accept': 'application/json',
+#     'OTP': '123345',
+#     'Accept-Version': 'V2',
+#     'Content-Type': 'application/json',
+#     'Cookie': 'TS0106293e=0132a679c07400f36242c054cc5c73a634f51486563baa5cc4d51293c0b38f68d10c82161b3074b1b2dfbe83a1ae5b78f2fd256699'
+#     }
+#     response = requests.request("POST", url, headers=headers, data=payload)
+#     # print(response.text)
+#     print("----------------------------------------------------------------------------------------------------------")
+#     data=json.loads(response.text)
 
-                    # compliance_cert =get_auth_headers(data["binarySecurityToken"],data["secret"])
-    concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
-    # print("the val is",concatenated_value)
-    encoded_value = base64.b64encode(concatenated_value.encode()).decode()
-    requestid=data["requestID"]
-    with open(f"certficatejavaaa.pem", 'w') as file:   
-        file.write(base64.b64decode(data["binarySecurityToken"]).decode())
-    return encoded_value,requestid
+#                     # compliance_cert =get_auth_headers(data["binarySecurityToken"],data["secret"])
+#     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
+#     # print("the val is",concatenated_value)
+#     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
+#     requestid=data["requestID"]
+#     with open(f"certficatejavaaa.pem", 'w') as file:   
+#         file.write(base64.b64decode(data["binarySecurityToken"]).decode())
+#     return encoded_value,requestid
 
-encoded_value_csid,requestid=create_csid()
+# encoded_value_csid,requestid=create_csid()
 # print("the orginal encoded csid is",encoded_value_csid)
 
 
 def create_public_key():
-     with open("certficatejavaaa.pem", 'r') as file:
+     with open("Dossary-Two-Corporation.pem", 'r') as file:
                 base_64= file.read()
                 cert_base64 = """
                 -----BEGIN CERTIFICATE-----
@@ -236,15 +248,15 @@ def digital_signature():
                 hash_bytes = bytes.fromhex(hash)
                 private_key = serialization.load_pem_private_key(key_file.read(), password=None, backend=default_backend())
                 signature = private_key.sign(hash_bytes, ec.ECDSA(hashes.SHA256()))
-                # print(signature)
+                print(signature)
                 encoded_signature = base64.b64encode(signature).decode()
-                # print(encoded_signature)
+                print(encoded_signature)
                 return encoded_signature
 
 # digital_signature()
 
 def extract_certificate_details():
-            with open("certficatejavaaa.pem", 'r') as file:
+            with open("Dossary-Two-Corporation.pem", 'r') as file:
                 certificate_content = file.read()
                 cert_path = 'certificatejavaa2.pem'
                 with open(cert_path, "w") as file:
@@ -261,7 +273,7 @@ def extract_certificate_details():
 
 
 def certificate_hash():
-                with open('certficatejavaaa.pem', 'rb') as f:
+                with open('Dossary-Two-Corporation.pem', 'rb') as f:
                     certificate_data = f.read().decode('utf-8')
                     # print(certificate_data)
                 certificate_data_bytes = certificate_data.encode('utf-8')
@@ -295,17 +307,17 @@ def signxml_modify():
             element_in = root.find(xpath_issuerName, namespaces)
             element_sn = root.find(xpath_serialNum, namespaces)
             element_dv.text = (encoded_certificate_hash)
-            element_st.text =  datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-            signing_time =element_st.text
+            element_st.text = "2024-05-07T10:12:07"
+            # print(element_st.text)
             element_in.text = issuer_name
             element_sn.text = str(serial_number)
+            print(element_sn.text)
             with open("after_step_4.xml", 'wb') as file:
                 original_invoice_xml.write(file,encoding='utf-8',xml_declaration=True,)
-            return namespaces ,signing_time
+            return namespaces 
 
 
-def generate_Signed_Properties_Hash(namespaces,signing_time,issuer_name,serial_number,encoded_certificate_hash):
-        
+def generate_Signed_Properties_Hash(issuer_name,serial_number,encoded_certificate_hash):
                 xml_string = '''<xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="xadesSignedProperties">
                                     <xades:SignedSignatureProperties>
                                         <xades:SigningTime>{signing_time}</xades:SigningTime>
@@ -323,22 +335,26 @@ def generate_Signed_Properties_Hash(namespaces,signing_time,issuer_name,serial_n
                                         </xades:SigningCertificate>
                                     </xades:SignedSignatureProperties>
                                 </xades:SignedProperties>'''
-                xml_string_rendered = xml_string.format(signing_time=signing_time, certificate_hash=encoded_certificate_hash, issuer_name=issuer_name, serial_number=str(serial_number))
+                
+                signing_time="2024-05-07T10:12:07"
+                certificate_hash ="NmQ4ZGYxNzU3M2NiNTc4MWNkNjg5YmE4NjIwMTFmNjY3OGM0Yjc4MWRkYzIzYTExM2RlNGZiYzk3YWRmM2E1Yw=="
+                issuer_name = "CN=PEZEINVOICESCA4-CA, DC=extgazt, DC=gov, DC=local"
+                serial_number = "2676089507113944281444703416541228339933757097"
+                xml_string_rendered = xml_string.format(signing_time=signing_time, certificate_hash=certificate_hash, issuer_name=issuer_name, serial_number=str(serial_number))
                 # print(xml_string_rendered)
                 utf8_bytes = xml_string_rendered.encode('utf-8')
                 hash_object = hashlib.sha256(utf8_bytes)
                 hex_sha256 = hash_object.hexdigest()
-                # print(hex_sha256)
-                signed_properties_base64=  base64.b64encode(hex_sha256.encode('utf-8')).decode('utf-8')
+                signed_properties_base64 = base64.b64encode(hex_sha256.encode('utf-8')).decode('utf-8')
                 # print(signed_properties_base64)
                 return signed_properties_base64
-
 
 def populate_The_UBL_Extensions_Output(encoded_signature):
             updated_invoice_xml = etree.parse('after_step_4.xml')
             root3 = updated_invoice_xml.getroot()
-            with open("certficatejavaaa.pem", "r") as file:
+            with open("Dossary-Two-Corporation.pem", "r") as file:
               content = file.read()
+            #   print(content)
             xpath_signvalue = ("ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/sig:UBLDocumentSignatures/sac:SignatureInformation/ds:Signature/ds:SignatureValue")
             xpath_x509certi = ("ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/sig:UBLDocumentSignatures/sac:SignatureInformation/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate")
             xpath_digvalue = ("ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/sig:UBLDocumentSignatures/sac:SignatureInformation/ds:Signature/ds:SignedInfo/ds:Reference[@URI='#xadesSignedProperties']/ds:DigestValue")
@@ -349,7 +365,7 @@ def populate_The_UBL_Extensions_Output(encoded_signature):
             digestvalue6_2 = root3.find(xpath_digvalue2 , namespaces)
             signValue6.text = (encoded_signature)
             x509Certificate6.text = content
-            digestvalue6.text = (signed_properties_base64)
+            digestvalue6.text = signed_properties_base64
             digestvalue6_2.text =(encoded_hash)
             with open("final_xml_after_sign.xml", 'wb') as file:
                 updated_invoice_xml.write(file,encoding='utf-8',xml_declaration=True,)
@@ -462,28 +478,6 @@ def update_Qr_toXml():
 
                         xml_tree.write(xml_file_path, encoding="UTF-8", xml_declaration=True)
 
-def structuring_signedxml():
-                    with open('final_xml_after_sign.xml', 'r') as file:
-                        xml_content = file.readlines()
-                    indentations = {
-                        29: ['<xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Target="signature">','</xades:QualifyingProperties>'],
-                        33: ['<xades:SignedProperties Id="xadesSignedProperties">', '</xades:SignedProperties>'],
-                        37: ['<xades:SignedSignatureProperties>','</xades:SignedSignatureProperties>'],
-                        41: ['<xades:SigningTime>', '<xades:SigningCertificate>','</xades:SigningCertificate>'],
-                        45: ['<xades:Cert>','</xades:Cert>'],
-                        49: ['<xades:CertDigest>', '<xades:IssuerSerial>', '</xades:CertDigest>', '</xades:IssuerSerial>'],
-                        53: ['<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>', '<ds:DigestValue>', '<ds:X509IssuerName>', '<ds:X509SerialNumber>']
-                    }
-                    def adjust_indentation(line):
-                        for col, tags in indentations.items():
-                            for tag in tags:
-                                if line.strip().startswith(tag):
-                                    return ' ' * (col - 1) + line.lstrip()
-                        return line
-                    adjusted_xml_content = [adjust_indentation(line) for line in xml_content]
-                    with open('final_xml_after_indent.xml', 'w') as file:
-                        file.writelines(adjusted_xml_content)
-                        
 def xml_base64_Decode(signed_xmlfile_name):
                     try:
                         with open(signed_xmlfile_name, "r") as file:
@@ -500,8 +494,8 @@ def compliance_api_call():
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
         payload = json.dumps({
         "invoiceHash": encoded_hash,
-        "uuid": "d16798d6-0d09-11ef-8713-020017019f27",
-        "invoice": xml_base64_Decode('final_xml_after_indent.xml')
+        "uuid": "21c5016c-0b82-11ef-a482-020017019f27",
+        "invoice": xml_base64_Decode('final_xml_after_sign.xml')
         })
         # print(encoded_hash)
         # print(xml_base64_Decode('final_xml_after_sign.xml'))
@@ -510,7 +504,7 @@ def compliance_api_call():
         'accept': 'application/json',
         'Accept-Language': 'en',
         'Accept-Version': 'V2',
-        'Authorization': 'Basic' + encoded_value_csid,
+        'Authorization': 'Basic' + "VFVsSlJrTjZRME5DVEVkblFYZEpRa0ZuU1ZSbFFVRkJVSEZyWmxac2RUSldRMlpRVFZGQlFrRkJRU3R4VkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYVUxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSnpkMGRSV1VSV1VWRkVSWGhLVVZKV2NFWlRWVFZYVkRCc1JGSldUa1JSVkZGMFVUQkZkMGhvWTA1TmFsRjNUbFJCZUUxVVkzcE5ha1UxVjJoalRrMXFXWGRPVkVGNFRWUmpNRTFxUlRWWGFrSm5UVkZ6ZDBOUldVUldVVkZIUlhkS1ZGRlVSVlJOUWtWSFFURlZSVU5vVFV0TmFrRXhUVVJCZDAxcVdUTk9la1ZVVFVKRlIwRXhWVVZEZUUxTFRXcEJNVTFFUVhkTmFsa3pUbnBGYmsxRFZVZEJNVlZGUVhoTlpWWkdVbFJXUXpBMFQwUlpNRTE2UlhoT1JGVjBUWHByTlU5VWF6VlBWR3MxVDFSQmQwMUVRWHBOUmxsM1JVRlpTRXR2V2tsNmFqQkRRVkZaUmtzMFJVVkJRVzlFVVdkQlJXUTBaa2x3V0dOS1lqZE9RVkY0V0VaQ1preEdSRVV4TURBelprSm9WV2hSU3pCTlVVRnhOM3BoYlZCSGVuVkZOWGd5UkhWbVVFcHJkRkpoVEdwV2FEUmxSV1k1TTFSM2N6RTNiM2hJYkZSbVZVZzBVRTlMVDBOQk1HdDNaMmRPUmsxSlIzcENaMDVXU0ZKRlJXZGhjM2RuWVdscloyRlZkMmRoU1hoUGVrRTFRbWRPVmtKQlVVMU5ha1YwVmtaT1ZXWkVTWFJXUms1VlprUk5kRnBYVVhsTmJWbDRXa1JuZEZwVVdtaE5hVEI0VFZSRk5FeFViR2xPVkdkMFdrUnNhRTlIV1hoTlYxWnJUbFJuTkUxU09IZElVVmxMUTFwSmJXbGFVSGxNUjFGQ1FWRjNVRTE2UVhoTlZFMDBUbFJaTlUxNlJYZE5SRUY2VFZFd2QwTjNXVVJXVVZGTlJFRlJlRTFVUVhkTlVUaDNSRkZaUkZaUlVXRkVRVnBGV1ZjeGRGbFhNSGhKYWtGblFtZE9Wa0pCT0UxSFYzaHdZbGRzTUZwWFVXZGlSMnhvV1cxc2MyRllValZKUjA1MllsaENhR0p1YTNkSVVWbEVWbEl3VDBKQ1dVVkdSSFp0YzJ3NFVsWkJOM3BDVjBSbU5URTJjM0p0YkdWc1ltWjRUVUk0UjBFeFZXUkpkMUZaVFVKaFFVWk5aa0UxY21Wd00xSk1TMVI2TVhSaFNVdFhTVlZZZWtGWVYydE5TVWhzUW1kT1ZraFNPRVZuWkRCM1oyUnZkMmRrWldkblpGTm5aMlJIUjJkak5YTmFSMFozVDJrNGRrd3dUazlRVmtKR1YydFdTbFJzV2xCVFZVNUdWVEJPUWs1RE1VUlJVMmQ0UzFONFJGUnFNVkZWYkhCR1UxVTFWMVF3YkVSU1ZrSk1VMVJSYzFFd05EbFJNRkpSVEVWT1QxQldRakZaYlhod1dYbFZlVTFGZEd4bFUxVjVUVVpPYkdOdVduQlpNbFo2VEVWT1QxQldUbXhqYmxwd1dUSldla3hGVGs5UVZVNTJZbTFhY0ZvelZubFpXRkp3WWpJMGMxSkZUVGxhV0dnd1pXMUdNRmt5UlhOU1JVMDVXakk1TWt4RlVrUlFWM2gyV1RKR2MxQXlUbXhqYmxKd1dtMXNhbGxZVW14VmJWWXlZakpPYUdSSGJIWmlhM2h3WXpOUkwxbHRSbnBhVkRsMldXMXdiRmt6VWtSaVIwWjZZM294YWxWcmVFVmhXRTR3WTIxc2FXUllVbkJpTWpWUllqSnNkV1JFUTBKNloxbEpTM2RaUWtKUlZVaEJVVVZGWjJORmQyZGlOSGRuWW5OSFEwTnpSMEZSVlVaQ2VrRkRhRzlIZFdKSFVtaGpSRzkyVEhrNVJGUnFNVkZTVm5CR1UxVTFWMVF3YkVSU1ZrNUVVVlJSZEZFd1JYTlJNRFE1VVZWc1FreEZUazlRVmtJeFdXMTRjRmw1VlhsTlJYUnNaVk5WZVUxR1RteGpibHB3V1RKV2VreEZUazlRVms1c1kyNWFjRmt5Vm5wTVJVNVBVRlZPZG1KdFduQmFNMVo1V1ZoU2NHSXlOSE5TUlUwNVdsaG9NR1Z0UmpCWk1rVnpVa1ZOT1ZveU9USk1SVkpFVUZkNGRsa3lSbk5RTWs1Q1VUSldlV1JIYkcxaFYwNW9aRWRWTDFsdFJucGFWRGwyV1cxd2JGa3pVa1JpUjBaNlkzb3hhbHBZU2pCaFYxcHdXVEpHTUdGWE9YVlJXRll3WVVjNWVXRllValZOUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKU0dkRVFUaENaMnR5UW1kRlJVRlpTVE5HVVdORlRIcEJkRUpwVlhKQ1owVkZRVmxKTTBaUmFVSm9jV2RrYUU1RU4wVnZZblJ1VTFOSWVuWnpXakE0UWxaYWIwZGpNa015UkRWalZtUkJaMFpyUVdkRlVVMUNNRWRCTVZWa1NsRlJWMDFDVVVkRFEzTkhRVkZWUmtKM1RVTkNaMmR5UW1kRlJrSlJZMFJCZWtGdVFtZHJja0puUlVWQldVa3pSbEZ2UlVkcVFWbE5RVzlIUTBOelIwRlJWVVpDZDAxRFRVRnZSME5EYzBkQlVWVkdRbmROUkUxQmIwZERRM0ZIVTAwME9VSkJUVU5CTUdkQlRVVlZRMGxFUzJjdmJtTTFORWQwTldGRmRGQkRVV2hLUWtKdGRpdDVTRnBRZUVaVksweHNhRmhJYkRscmFHRndRV2xGUVhKeFRHVXJVV05ZVm1kSmJrNHlVa1JzU0hwYVdsUldLMmhqYVhkbVQwMDJUVzAxSzBncmJXWnRTbk05OjcvWjZhRjdGcHRsM3JvZjFNcENHcStHMjdLZjBQL2JibjVKOTJJY3RZaEk9",
         'Content-Type': 'application/json',
         'Cookie': 'TS0106293e=0132a679c0b10cf6c29a653de982233d1a963a1c3d67ad649e41021b0a7b1825208bb7e7615f60058af4ed60330ae0c3dfb7f76f29'
         }
@@ -544,14 +538,37 @@ def production_CSID():
                         print("Error: " + str(response.text))
                     data=json.loads(response.text)
                     concatenated_value = data["binarySecurityToken"] + ":" + data["secret"]
+                    print("the binary sec is", data["binarySecurityToken"])
                     encoded_value = base64.b64encode(concatenated_value.encode()).decode()
                     with open(f"certficatejavaaa.pem", 'w') as file:   #attaching X509 certificate
                         file.write(base64.b64decode(data["binarySecurityToken"]).decode('utf-8'))
                     return encoded_value
                 except Exception as e:
                     print("error in  production csid formation:  " + str(e) )
-                    
-encoded_value=production_CSID()
+
+def structuring_signedxml():
+                    with open('final_xml_after_sign.xml', 'r') as file:
+                        xml_content = file.readlines()
+                    indentations = {
+                        29: ['<xades:QualifyingProperties xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Target="signature">','</xades:QualifyingProperties>'],
+                        33: ['<xades:SignedProperties Id="xadesSignedProperties">', '</xades:SignedProperties>'],
+                        37: ['<xades:SignedSignatureProperties>','</xades:SignedSignatureProperties>'],
+                        41: ['<xades:SigningTime>', '<xades:SigningCertificate>','</xades:SigningCertificate>'],
+                        45: ['<xades:Cert>','</xades:Cert>'],
+                        49: ['<xades:CertDigest>', '<xades:IssuerSerial>', '</xades:CertDigest>', '</xades:IssuerSerial>'],
+                        53: ['<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>', '<ds:DigestValue>', '<ds:X509IssuerName>', '<ds:X509SerialNumber>']
+                    }
+                    def adjust_indentation(line):
+                        for col, tags in indentations.items():
+                            for tag in tags:
+                                if line.strip().startswith(tag):
+                                    return ' ' * (col - 1) + line.lstrip()
+                        return line
+                    adjusted_xml_content = [adjust_indentation(line) for line in xml_content]
+                    with open('final_xml_after_indent.xml', 'w') as file:
+                        file.writelines(adjusted_xml_content)
+                        
+# encoded_value=production_CSID()
 with open("finalzatcaxml.xml", 'r') as file:
         file_content = file.read()
         
@@ -564,10 +581,10 @@ hash, encoded_hash = getInvoiceHash(canonicalized_xml)
 # print(encoded_hash)
 
 encoded_signature=digital_signature()
-issuer_name,serial_number =extract_certificate_details()
-encoded_certificate_hash=certificate_hash()
-namespaces,signing_time=signxml_modify()
-signed_properties_base64=generate_Signed_Properties_Hash(namespaces,signing_time,issuer_name,serial_number,encoded_certificate_hash)
+issuer_name,serial_number=extract_certificate_details()
+encoded_certificate_hash = certificate_hash()
+namespaces=signxml_modify()
+signed_properties_base64=generate_Signed_Properties_Hash(issuer_name,serial_number,encoded_certificate_hash)
 populate_The_UBL_Extensions_Output(encoded_signature)
 create_public_key()
 tlv_data = generate_tlv_xml()
@@ -579,9 +596,8 @@ qrCodeBuf = b"".join(tagsBufsArray)
 qrCodeB64 = base64.b64encode(qrCodeBuf).decode('utf-8')
 # print(qrCodeB64)
 update_Qr_toXml()
+# compliance_api_call()
 structuring_signedxml()
-compliance_api_call()
-
 def reporting_API():
                         payload = json.dumps({
                         "invoiceHash": encoded_hash,
@@ -593,13 +609,13 @@ def reporting_API():
                                     'accept-language': 'en',
                                     'Clearance-Status': '0',
                                     'Accept-Version': 'V2',
-                                     'Authorization': 'Basic' + encoded_value,
+                                     'Authorization': 'Basic' + "VFVsSlJrTjZRME5DVEVkblFYZEpRa0ZuU1ZSbFFVRkJVSEZyWmxac2RUSldRMlpRVFZGQlFrRkJRU3R4VkVGTFFtZG5jV2hyYWs5UVVWRkVRV3BDYVUxU1ZYZEZkMWxMUTFwSmJXbGFVSGxNUjFGQ1IxSlpSbUpIT1dwWlYzZDRSWHBCVWtKbmIwcHJhV0ZLYXk5SmMxcEJSVnBHWjA1dVlqTlplRVo2UVZaQ1oyOUthMmxoU21zdlNYTmFRVVZhUm1ka2JHVklVbTVaV0hBd1RWSnpkMGRSV1VSV1VWRkVSWGhLVVZKV2NFWlRWVFZYVkRCc1JGSldUa1JSVkZGMFVUQkZkMGhvWTA1TmFsRjNUbFJCZUUxVVkzcE5ha1UxVjJoalRrMXFXWGRPVkVGNFRWUmpNRTFxUlRWWGFrSm5UVkZ6ZDBOUldVUldVVkZIUlhkS1ZGRlVSVlJOUWtWSFFURlZSVU5vVFV0TmFrRXhUVVJCZDAxcVdUTk9la1ZVVFVKRlIwRXhWVVZEZUUxTFRXcEJNVTFFUVhkTmFsa3pUbnBGYmsxRFZVZEJNVlZGUVhoTlpWWkdVbFJXUXpBMFQwUlpNRTE2UlhoT1JGVjBUWHByTlU5VWF6VlBWR3MxVDFSQmQwMUVRWHBOUmxsM1JVRlpTRXR2V2tsNmFqQkRRVkZaUmtzMFJVVkJRVzlFVVdkQlJXUTBaa2x3V0dOS1lqZE9RVkY0V0VaQ1preEdSRVV4TURBelprSm9WV2hSU3pCTlVVRnhOM3BoYlZCSGVuVkZOWGd5UkhWbVVFcHJkRkpoVEdwV2FEUmxSV1k1TTFSM2N6RTNiM2hJYkZSbVZVZzBVRTlMVDBOQk1HdDNaMmRPUmsxSlIzcENaMDVXU0ZKRlJXZGhjM2RuWVdscloyRlZkMmRoU1hoUGVrRTFRbWRPVmtKQlVVMU5ha1YwVmtaT1ZXWkVTWFJXUms1VlprUk5kRnBYVVhsTmJWbDRXa1JuZEZwVVdtaE5hVEI0VFZSRk5FeFViR2xPVkdkMFdrUnNhRTlIV1hoTlYxWnJUbFJuTkUxU09IZElVVmxMUTFwSmJXbGFVSGxNUjFGQ1FWRjNVRTE2UVhoTlZFMDBUbFJaTlUxNlJYZE5SRUY2VFZFd2QwTjNXVVJXVVZGTlJFRlJlRTFVUVhkTlVUaDNSRkZaUkZaUlVXRkVRVnBGV1ZjeGRGbFhNSGhKYWtGblFtZE9Wa0pCT0UxSFYzaHdZbGRzTUZwWFVXZGlSMnhvV1cxc2MyRllValZKUjA1MllsaENhR0p1YTNkSVVWbEVWbEl3VDBKQ1dVVkdSSFp0YzJ3NFVsWkJOM3BDVjBSbU5URTJjM0p0YkdWc1ltWjRUVUk0UjBFeFZXUkpkMUZaVFVKaFFVWk5aa0UxY21Wd00xSk1TMVI2TVhSaFNVdFhTVlZZZWtGWVYydE5TVWhzUW1kT1ZraFNPRVZuWkRCM1oyUnZkMmRrWldkblpGTm5aMlJIUjJkak5YTmFSMFozVDJrNGRrd3dUazlRVmtKR1YydFdTbFJzV2xCVFZVNUdWVEJPUWs1RE1VUlJVMmQ0UzFONFJGUnFNVkZWYkhCR1UxVTFWMVF3YkVSU1ZrSk1VMVJSYzFFd05EbFJNRkpSVEVWT1QxQldRakZaYlhod1dYbFZlVTFGZEd4bFUxVjVUVVpPYkdOdVduQlpNbFo2VEVWT1QxQldUbXhqYmxwd1dUSldla3hGVGs5UVZVNTJZbTFhY0ZvelZubFpXRkp3WWpJMGMxSkZUVGxhV0dnd1pXMUdNRmt5UlhOU1JVMDVXakk1TWt4RlVrUlFWM2gyV1RKR2MxQXlUbXhqYmxKd1dtMXNhbGxZVW14VmJWWXlZakpPYUdSSGJIWmlhM2h3WXpOUkwxbHRSbnBhVkRsMldXMXdiRmt6VWtSaVIwWjZZM294YWxWcmVFVmhXRTR3WTIxc2FXUllVbkJpTWpWUllqSnNkV1JFUTBKNloxbEpTM2RaUWtKUlZVaEJVVVZGWjJORmQyZGlOSGRuWW5OSFEwTnpSMEZSVlVaQ2VrRkRhRzlIZFdKSFVtaGpSRzkyVEhrNVJGUnFNVkZTVm5CR1UxVTFWMVF3YkVSU1ZrNUVVVlJSZEZFd1JYTlJNRFE1VVZWc1FreEZUazlRVmtJeFdXMTRjRmw1VlhsTlJYUnNaVk5WZVUxR1RteGpibHB3V1RKV2VreEZUazlRVms1c1kyNWFjRmt5Vm5wTVJVNVBVRlZPZG1KdFduQmFNMVo1V1ZoU2NHSXlOSE5TUlUwNVdsaG9NR1Z0UmpCWk1rVnpVa1ZOT1ZveU9USk1SVkpFVUZkNGRsa3lSbk5RTWs1Q1VUSldlV1JIYkcxaFYwNW9aRWRWTDFsdFJucGFWRGwyV1cxd2JGa3pVa1JpUjBaNlkzb3hhbHBZU2pCaFYxcHdXVEpHTUdGWE9YVlJXRll3WVVjNWVXRllValZOUVRSSFFURlZaRVIzUlVJdmQxRkZRWGRKU0dkRVFUaENaMnR5UW1kRlJVRlpTVE5HVVdORlRIcEJkRUpwVlhKQ1owVkZRVmxKTTBaUmFVSm9jV2RrYUU1RU4wVnZZblJ1VTFOSWVuWnpXakE0UWxaYWIwZGpNa015UkRWalZtUkJaMFpyUVdkRlVVMUNNRWRCTVZWa1NsRlJWMDFDVVVkRFEzTkhRVkZWUmtKM1RVTkNaMmR5UW1kRlJrSlJZMFJCZWtGdVFtZHJja0puUlVWQldVa3pSbEZ2UlVkcVFWbE5RVzlIUTBOelIwRlJWVVpDZDAxRFRVRnZSME5EYzBkQlVWVkdRbmROUkUxQmIwZERRM0ZIVTAwME9VSkJUVU5CTUdkQlRVVlZRMGxFUzJjdmJtTTFORWQwTldGRmRGQkRVV2hLUWtKdGRpdDVTRnBRZUVaVksweHNhRmhJYkRscmFHRndRV2xGUVhKeFRHVXJVV05ZVm1kSmJrNHlVa1JzU0hwYVdsUldLMmhqYVhkbVQwMDJUVzAxSzBncmJXWnRTbk05OjcvWjZhRjdGcHRsM3JvZjFNcENHcStHMjdLZjBQL2JibjVKOTJJY3RZaEk9",
                                     'Content-Type': 'application/json',
                                     'Cookie': 'TS0106293e=0132a679c0639d13d069bcba831384623a2ca6da47fac8d91bef610c47c7119dcdd3b817f963ec301682dae864351c67ee3a402866'
                                     }    
-                        response = requests.request("POST", url="https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/invoices/reporting/single", headers=headers, data=payload)
+                        response = requests.request("POST", url="https://gw-fatoora.zatca.gov.sa/e-invoicing/simulation/invoices/reporting/single", headers=headers, data=payload)
                         print(response.text)
-                        print("----------------------------------------------------------------------------------------------------------")
+                        print("---------------------------------------------DF-------------------------------------------------------------")
 
 reporting_API()
 
@@ -609,7 +625,7 @@ def clearance_API():
                         payload = json.dumps({
                         "invoiceHash": encoded_hash,
                         "uuid": "d16798d6-0d09-11ef-8713-020017019f27",
-                        "invoice": xml_base64_Decode('final_xml_after_indent.xml'), })
+                        "invoice": xml_base64_Decode('final_xml_after_sign.xml'), })
                         headers = {
                         'accept': 'application/json',
                         'accept-language': 'en',
