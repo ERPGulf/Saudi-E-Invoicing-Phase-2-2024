@@ -500,7 +500,7 @@ def compliance_api_call():
         url = "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/compliance/invoices"
         payload = json.dumps({
         "invoiceHash": encoded_hash,
-        "uuid": "d16798d6-0d09-11ef-8713-020017019f27",
+        "uuid": "f3f49db4-0d44-11ef-8e6c-020017019f27",
         "invoice": xml_base64_Decode('final_xml_after_indent.xml')
         })
         # print(encoded_hash)
@@ -585,7 +585,7 @@ compliance_api_call()
 def reporting_API():
                         payload = json.dumps({
                         "invoiceHash": encoded_hash,
-                        "uuid": "d16798d6-0d09-11ef-8713-020017019f27",
+                        "uuid": "f3f49db4-0d44-11ef-8e6c-020017019f27",
                         "invoice": xml_base64_Decode('final_xml_after_indent.xml'),
                         })
                         headers = {

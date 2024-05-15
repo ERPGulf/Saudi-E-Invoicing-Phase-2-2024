@@ -578,7 +578,7 @@ canonicalized_xml = canonicalize_xml(tag_removed_xml)
 hash, encoded_hash = getInvoiceHash(canonicalized_xml)
 
 # print(hash)
-# print(encoded_hash)
+print(encoded_hash)
 
 encoded_signature=digital_signature()
 issuer_name,serial_number=extract_certificate_details()
@@ -601,8 +601,8 @@ structuring_signedxml()
 def reporting_API():
                         payload = json.dumps({
                         "invoiceHash": encoded_hash,
-                        "uuid": "d16798d6-0d09-11ef-8713-020017019f27",
-                        "invoice": xml_base64_Decode('final_xml_after_indent.xml'),
+                        "uuid": "1c9dc87a-0d3c-11ef-92c8-020017019f27",
+                        "invoice": xml_base64_Decode('sdsign.xml'),
                         })
                         headers = {
                                 'accept': 'application/json',
