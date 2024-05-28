@@ -12,6 +12,7 @@ from frappe.utils import now
 import re
 from lxml import etree
 from frappe.utils.data import  get_time
+from datetime import datetime, timezone
 import xml.etree.ElementTree as ET
 import json
 import xml.etree.ElementTree as ElementTree
@@ -36,6 +37,8 @@ def  get_Issue_Time(invoice_number):
                 doc = frappe.get_doc("Sales Invoice", invoice_number)
                 time = get_time(doc.posting_time)
                 issue_time = time.strftime("%H:%M:%S")  #time in format of  hour,mints,secnds
+                # utc_now = datetime.utcnow().replace(tzinfo=timezone.utc)
+                # issue_time = utc_now.strftime('%H:%M:%SZ') 
                 return issue_time
   
 def xml_tags():
@@ -285,7 +288,8 @@ def additional_Reference(invoice):
                 cbc_EmbeddedDocumentBinaryObject.set("mimeCode", "text/plain")
                 
                 settings = frappe.get_doc('Zatca setting')
-                company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                company = settings.company
+                company_name = frappe.db.get_value("Company", company, "abbr")
                 pih_data_raw = settings.get("pih", "{}")
                 pih_data = json.loads(pih_data_raw)
                 pih = get_pih_for_company(pih_data, company_name)
@@ -365,10 +369,10 @@ def customer_Data(invoice,sales_invoice_doc):
                 cbc_ID_4 = ET.SubElement(cac_PartyIdentification_1, "cbc:ID")
                 cbc_ID_4.set("schemeID", "CRN")
                 cbc_ID_4.text =customer_doc.tax_id
-                if int(frappe.__version__.split('.')[0]) == 15:
-                    address = frappe.get_doc("Address", customer_doc.customer_primary_address)    
+                if int(frappe.__version__.split('.')[0]) == 13:
+                    address = frappe.get_doc("Address", sales_invoice_doc.customer_address)   
                 else:
-                    address = frappe.get_doc("Address", sales_invoice_doc.customer_address)
+                    address = frappe.get_doc("Address", customer_doc.customer_primary_address) 
                 cac_PostalAddress_1 = ET.SubElement(cac_Party_2, "cac:PostalAddress")
                 cbc_StreetName_1 = ET.SubElement(cac_PostalAddress_1, "cbc:StreetName")
                 cbc_StreetName_1.text = address.address_line1
@@ -408,7 +412,7 @@ def delivery_And_PaymentMeans(invoice,sales_invoice_doc, is_return):
                 cbc_ActualDeliveryDate.text = str(sales_invoice_doc.due_date)
                 cac_PaymentMeans = ET.SubElement(invoice, "cac:PaymentMeans")
                 cbc_PaymentMeansCode = ET.SubElement(cac_PaymentMeans, "cbc:PaymentMeansCode")
-                cbc_PaymentMeansCode.text = "32"
+                cbc_PaymentMeansCode.text = "30"
                 
                 if is_return == 1:
                     cbc_InstructionNote = ET.SubElement(cac_PaymentMeans, "cbc:InstructionNote")
@@ -423,7 +427,7 @@ def delivery_And_PaymentMeans_for_Compliance(invoice,sales_invoice_doc, complian
                 cbc_ActualDeliveryDate.text = str(sales_invoice_doc.due_date)
                 cac_PaymentMeans = ET.SubElement(invoice, "cac:PaymentMeans")
                 cbc_PaymentMeansCode = ET.SubElement(cac_PaymentMeans, "cbc:PaymentMeansCode")
-                cbc_PaymentMeansCode.text = "32"
+                cbc_PaymentMeansCode.text = "30"
                 
                 if compliance_type == "3" or compliance_type == "4" or compliance_type == "5" or compliance_type == "6":
                     cbc_InstructionNote = ET.SubElement(cac_PaymentMeans, "cbc:InstructionNote")
@@ -443,6 +447,27 @@ def billing_reference_for_credit_and_debit_note(invoice,sales_invoice_doc):
                 return invoice
             except Exception as e:
                     frappe.throw("credit and debit note billing failed"+ str(e) )
+
+def get_exemption_reason_map():
+    return {
+        "VATEX-SA-29": "Financial services mentioned in Article 29 of the VAT Regulations.",
+        "VATEX-SA-29-7": "Life insurance services mentioned in Article 29 of the VAT Regulations.",
+        "VATEX-SA-30": "Real estate transactions mentioned in Article 30 of the VAT Regulations.",
+        "VATEX-SA-32": "Export of goods.",
+        "VATEX-SA-33": "Export of services.",
+        "VATEX-SA-34-1": "The international transport of Goods.",
+        "VATEX-SA-34-2": "International transport of passengers.",
+        "VATEX-SA-34-3": "Services directly connected and incidental to a Supply of international passenger transport.",
+        "VATEX-SA-34-4": "Supply of a qualifying means of transport.",
+        "VATEX-SA-34-5": "Any services relating to Goods or passenger transportation, as defined in article twenty five of these Regulations.",
+        "VATEX-SA-35": "Medicines and medical equipment.",
+        "VATEX-SA-36": "Qualifying metals.",
+        "VATEX-SA-EDU": "Private education to citizen.",
+        "VATEX-SA-HEA ": "Private healthcare to citizen.",
+        "VATEX-SA-MLTRY": "Supply of qualified military goods",
+        "VATEX-SA-OOS": "The reason is a free text, has to be provided by the taxpayer on case to case basis."
+    
+    }
 
 
 def tax_Data(invoice,sales_invoice_doc):
@@ -484,10 +509,25 @@ def tax_Data(invoice,sales_invoice_doc):
                 cbc_TaxAmount_2.text = str(tax_amount_without_retention) # str(abs(sales_invoice_doc.base_total_taxes_and_charges))
                 cac_TaxCategory_1 = ET.SubElement(cac_TaxSubtotal, "cac:TaxCategory")
                 cbc_ID_8 = ET.SubElement(cac_TaxCategory_1, "cbc:ID")
-                cbc_ID_8.text =  "S"
+                if sales_invoice_doc.custom_zatca_tax_category == "Standard":
+                    cbc_ID_8.text = "S"
+                elif sales_invoice_doc.custom_zatca_tax_category == "Zero Rated":
+                    cbc_ID_8.text = "Z"
+                elif sales_invoice_doc.custom_zatca_tax_category == "Exempted":
+                    cbc_ID_8.text = "E"
+                elif sales_invoice_doc.custom_zatca_tax_category == "Services outside scope of tax / Not subject to VAT":
+                    cbc_ID_8.text = "O"
                 cbc_Percent_1 = ET.SubElement(cac_TaxCategory_1, "cbc:Percent")
                 # cbc_Percent_1.text = str(sales_invoice_doc.taxes[0].rate)
-                cbc_Percent_1.text = f"{float(sales_invoice_doc.taxes[0].rate):.2f}"                
+                cbc_Percent_1.text = f"{float(sales_invoice_doc.taxes[0].rate):.2f}" 
+                exemption_reason_map = get_exemption_reason_map()
+                if sales_invoice_doc.custom_zatca_tax_category != "Standard":
+                    cbc_TaxExemptionReasonCode = ET.SubElement(cac_TaxCategory_1, "cbc:TaxExemptionReasonCode")
+                    cbc_TaxExemptionReasonCode.text = sales_invoice_doc.custom_exemption_reason_code
+                    cbc_TaxExemptionReason = ET.SubElement(cac_TaxCategory_1, "cbc:TaxExemptionReason")
+                    reason_code = sales_invoice_doc.custom_exemption_reason_code
+                    if reason_code in exemption_reason_map:
+                        cbc_TaxExemptionReason.text = exemption_reason_map[reason_code]       
                 cac_TaxScheme_3 = ET.SubElement(cac_TaxCategory_1, "cac:TaxScheme")
                 cbc_ID_9 = ET.SubElement(cac_TaxScheme_3, "cbc:ID")
                 cbc_ID_9.text = "VAT"
@@ -553,7 +593,14 @@ def item_data(invoice,sales_invoice_doc):
                     cbc_Name.text = single_item.item_code
                     cac_ClassifiedTaxCategory = ET.SubElement(cac_Item, "cac:ClassifiedTaxCategory")
                     cbc_ID_11 = ET.SubElement(cac_ClassifiedTaxCategory, "cbc:ID")
-                    cbc_ID_11.text = "S"
+                    if sales_invoice_doc.custom_zatca_tax_category == "Standard":
+                        cbc_ID_11 .text = "S"
+                    elif sales_invoice_doc.custom_zatca_tax_category == "Zero Rated":
+                        cbc_ID_11 .text = "Z"
+                    elif sales_invoice_doc.custom_zatca_tax_category == "Exempted":
+                        cbc_ID_11 .text = "E"
+                    elif sales_invoice_doc.custom_zatca_tax_category == "Services outside scope of tax / Not subject to VAT":
+                        cbc_ID_11 .text = "O"
                     cbc_Percent_2 = ET.SubElement(cac_ClassifiedTaxCategory, "cbc:Percent")
                     cbc_Percent_2.text = f"{float(item_tax_percentage):.2f}"
                     cac_TaxScheme_4 = ET.SubElement(cac_ClassifiedTaxCategory, "cac:TaxScheme")

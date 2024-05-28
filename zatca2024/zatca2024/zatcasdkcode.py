@@ -80,24 +80,26 @@ def get_latest_generated_csr_file(folder_path='.'):
 
 @frappe.whitelist(allow_guest=True)
 def generate_csr():
+              
                 try:
                     settings = frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                    company = settings.company
+                    company_name = frappe.db.get_value("Company", company, "abbr")
                     csr_config_file = f'{company_name}.properties'
                     private_key_file = f'{company_name}-privatekey.pem'
                     generated_csr_file = 'sdkcsr.pem'
                     SDK_ROOT = settings.sdk_root
                     sdk_config_file = f'{company_name}.json'
-
+                    
                     path_string = f"export SDK_ROOT={SDK_ROOT} && export FATOORA_HOME=$SDK_ROOT/Apps && export SDK_CONFIG={sdk_config_file} && export PATH=$PATH:$FATOORA_HOME &&  "
                     if settings.select == "Simulation":
                         command_generate_csr = path_string + f'fatoora -sim -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
+
                     else:
                         command_generate_csr = path_string + f'fatoora -csr -csrConfig {csr_config_file} -privateKey {private_key_file} -generatedCsr {generated_csr_file} -pem'
-
                     try:
                         err, out = _execute_in_shell(command_generate_csr)
-                        print(out)
+    
                         with open(get_latest_generated_csr_file(), "r") as file_csr:
                             get_csr = file_csr.read()
                         file = frappe.get_doc({
@@ -188,7 +190,8 @@ def create_CSID():
                 try:
                     # set_cert_path()
                     settings=frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                    company = settings.company
+                    company_name = frappe.db.get_value("Company", company, "abbr")
                     with open(get_latest_generated_csr_file(), "r") as f:
                         csr_contents = f.read()
                     payload = json.dumps({
@@ -247,7 +250,8 @@ def create_CSID():
 def sign_invoice():
                 try:
                     settings=frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                    company = settings.company
+                    company_name = frappe.db.get_value("Company", company, "abbr")
                     xmlfile_name = 'finalzatcaxml.xml'
                     signed_xmlfile_name = 'sdsign.xml'
                     SDK_ROOT= settings.sdk_root
@@ -366,7 +370,8 @@ def compliance_api_call(uuid1,hash_value, signed_xmlfile_name ):
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
                         "invoice": xml_base64_Decode(signed_xmlfile_name) })
-                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                    company = settings.company
+                    company_name = frappe.db.get_value("Company", company, "abbr")
                     basic_auth = settings.get("basic_auth", "{}")
                     basic_auth_data = json.loads(basic_auth)
                     csid = get_csid_for_company(basic_auth_data, company_name)
@@ -410,7 +415,8 @@ def get_request_id_for_company(compliance_request_id_data, company_name):
 def production_CSID():    
                 try:
                     settings = frappe.get_doc('Zatca setting')
-                    company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                    company = settings.company
+                    company_name = frappe.db.get_value("Company", company, "abbr")
                     basic_auth = settings.get("basic_auth", "{}")
                     frappe.msgprint(basic_auth)
                     basic_auth_data = json.loads(basic_auth)
@@ -535,7 +541,8 @@ def update_json_data_pih(existing_data, company_name, pih):
 def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invoice_doc):
                     try:
                         settings = frappe.get_doc('Zatca setting')
-                        company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                        company = settings.company
+                        company_name = frappe.db.get_value("Company", company, "abbr")
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
@@ -624,7 +631,8 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                     try:
                         # frappe.msgprint("Clearance API")
                         settings = frappe.get_doc('Zatca setting')
-                        company_name = settings.company.replace(" ", "-").replace(".", "-").rstrip('.-')
+                        company = settings.company
+                        company_name = frappe.db.get_value("Company", company, "abbr")
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
@@ -915,7 +923,16 @@ def zatca_Background_on_submit(doc, method=None):
                         sales_invoice_doc = doc
                         invoice_number = sales_invoice_doc.name
                         settings = frappe.get_doc('Zatca setting')
-                        
+                        tax_rate = float(sales_invoice_doc.taxes[0].rate)
+
+                        if f"{tax_rate:.2f}" not in ['5.00', '15.00']:
+                            if sales_invoice_doc.custom_zatca_tax_category not in ["Zero Rated", "Exempted","Services outside scope of tax / Not subject to VAT"]:
+                                frappe.throw("Zatca tax category should be 'zero rated' or 'Exempted'or 'Services outside scope of tax / Not subject to VAT'.")
+
+                        if f"{tax_rate:.2f}" == '15.00':
+                            if sales_invoice_doc.custom_zatca_tax_category != "Standard":
+                                frappe.throw("Check the Zatca category code and enable it as standard.")
+
                         if settings.zatca_invoice_enabled != 1:
                             frappe.throw("Zatca Invoice is not enabled in Zatca Settings, Please contact your system administrator")
                         
