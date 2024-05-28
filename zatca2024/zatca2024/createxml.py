@@ -368,7 +368,7 @@ def customer_Data(invoice,sales_invoice_doc):
                 if int(frappe.__version__.split('.')[0]) == 15:
                     address = frappe.get_doc("Address", customer_doc.customer_primary_address)    
                 else:
-                    address = frappe.get_doc("Address", sales_invoice_doc.company_address)
+                    address = frappe.get_doc("Address", sales_invoice_doc.customer_address)
                 cac_PostalAddress_1 = ET.SubElement(cac_Party_2, "cac:PostalAddress")
                 cbc_StreetName_1 = ET.SubElement(cac_PostalAddress_1, "cbc:StreetName")
                 cbc_StreetName_1.text = address.address_line1
@@ -582,8 +582,8 @@ def xml_structuring(invoice,sales_invoice_doc):
                     file.write(pretty_xml_string)
                           # Attach the getting xml for each invoice
                 try:
-                    if frappe.db.exists("File",{ "attached_to_name": sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype }):
-                        frappe.db.delete("File",{ "attached_to_name":sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype })
+                    if frappe.db.exists("File",{"file_name":  "E-invoice-" + sales_invoice_doc.name + ".xml" }):
+                        frappe.db.delete("File",{"file_name":  "E-invoice-" + sales_invoice_doc.name + ".xml" })
                 except Exception as e:
                     frappe.throw(frappe.get_traceback())
                 
