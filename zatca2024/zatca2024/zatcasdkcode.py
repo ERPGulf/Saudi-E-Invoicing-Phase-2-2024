@@ -247,11 +247,11 @@ def create_CSID():
                 except Exception as e:
                             frappe.throw("error in csid formation: " + str(e))
      
-def sign_invoice():
+def sign_invoice(sales_invoice_doc):
                 try:
                     settings=frappe.get_doc('Zatca setting')
                     company = settings.company
-                    company_name = frappe.db.get_value("Company", company, "abbr")
+                    company_name = frappe.db.get_value("Company", sales_invoice_doc.company, "abbr")
                     xmlfile_name = 'finalzatcaxml.xml'
                     signed_xmlfile_name = 'sdsign.xml'
                     SDK_ROOT= settings.sdk_root
@@ -541,7 +541,7 @@ def reporting_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                     try:
                         settings = frappe.get_doc('Zatca setting')
                         company = settings.company
-                        company_name = frappe.db.get_value("Company", company, "abbr")
+                        company_name = frappe.db.get_value("Company", sales_invoice_doc.company, "abbr")
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
@@ -631,7 +631,7 @@ def clearance_API(uuid1,hash_value,signed_xmlfile_name,invoice_number,sales_invo
                         # frappe.msgprint("Clearance API")
                         settings = frappe.get_doc('Zatca setting')
                         company = settings.company
-                        company_name = frappe.db.get_value("Company", company, "abbr")
+                        company_name = frappe.db.get_value("Company", sales_invoice_doc.company, "abbr")
                         payload = json.dumps({
                         "invoiceHash": hash_value,
                         "uuid": uuid1,
@@ -770,7 +770,7 @@ def zatca_Call(invoice_number, compliance_type="0"):
                             
                             invoice= xml_tags()
                             invoice,uuid1,sales_invoice_doc=salesinvoice_data(invoice,invoice_number)
-                            
+                            # frappe.throw(sales_invoice_doc.company)
                             customer_doc= frappe.get_doc("Customer",sales_invoice_doc.customer)
                             
                             
@@ -792,7 +792,7 @@ def zatca_Call(invoice_number, compliance_type="0"):
                             invoice=tax_Data(invoice,sales_invoice_doc)
                             invoice=item_data(invoice,sales_invoice_doc)
                             pretty_xml_string=xml_structuring(invoice,sales_invoice_doc)
-                            signed_xmlfile_name,path_string=sign_invoice()
+                            signed_xmlfile_name,path_string=sign_invoice(sales_invoice_doc)
                             qr_code_value=generate_qr_code(signed_xmlfile_name,sales_invoice_doc,path_string)
                             hash_value =generate_hash(signed_xmlfile_name,path_string)
                             # validate_invoice(signed_xmlfile_name,path_string)
@@ -862,7 +862,7 @@ def zatca_Call_compliance(invoice_number, compliance_type="0"):
                             invoice=tax_Data(invoice,sales_invoice_doc)
                             invoice=item_data(invoice,sales_invoice_doc)
                             pretty_xml_string=xml_structuring(invoice,sales_invoice_doc)
-                            signed_xmlfile_name,path_string=sign_invoice()
+                            signed_xmlfile_name,path_string=sign_invoice(sales_invoice_doc)
                             qr_code_value=generate_qr_code(signed_xmlfile_name,sales_invoice_doc,path_string)
                             hash_value =generate_hash(signed_xmlfile_name,path_string)
                             # validate_invoice(signed_xmlfile_name,path_string)
