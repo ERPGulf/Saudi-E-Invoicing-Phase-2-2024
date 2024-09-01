@@ -629,8 +629,8 @@ def xml_structuring(invoice,sales_invoice_doc):
                     file.write(pretty_xml_string)
                           # Attach the getting xml for each invoice
                 try:
-                    if frappe.db.exists("File",{ "attached_to_name": sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype }):
-                        frappe.db.delete("File",{ "attached_to_name":sales_invoice_doc.name, "attached_to_doctype": sales_invoice_doc.doctype })
+                    if frappe.db.exists("File",{"file_name":  "E-invoice-" + sales_invoice_doc.name + ".xml" }):
+                        frappe.db.delete("File",{"file_name":  "E-invoice-" + sales_invoice_doc.name + ".xml" })
                 except Exception as e:
                     frappe.throw(frappe.get_traceback())
                 

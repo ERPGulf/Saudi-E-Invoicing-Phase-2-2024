@@ -506,6 +506,7 @@ def attach_QR_Image_For_Reporting(qr_code_value,sales_invoice_doc):
                                
                             })
                             file.save(ignore_permissions=True)
+                            frappe.db.set_value("Sales Invoice",sales_invoice_doc.name,'ksa_einv_qr',file.file_url)
                     except Exception as e:
                         frappe.throw("Error in qr image attach for reporting api   " + str(e)) 
 
@@ -753,6 +754,7 @@ def attach_QR_Image_For_Clearance(xml_cleared,sales_invoice_doc):
                            
                         })
                         file.save(ignore_permissions=True)
+                        frappe.db.set_value("Sales Invoice",sales_invoice_doc.name,'ksa_einv_qr',file.file_url)
                     except Exception as e:
                         frappe.throw("error in qrcode from cleared xml:  " + str(e) )
 
